@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import MobileTabBar from './components/layout/MobileTabBar'
 import ProtectedRoute from './components/layout/ProtectedRoute'
@@ -11,11 +11,9 @@ import CheckoutPage from './pages/CheckoutPage'
 import PaymentPage from './pages/PaymentPage'
 import OrdersPage from './pages/OrdersPage'
 import ProfilePage from './pages/ProfilePage'
-import FarmerDashboardPage from './pages/FarmerDashboardPage'
-import FarmerListingsPage from './pages/FarmerListingsPage'
+import FarmerListingsPage from './pages/FarmerListingPage'
 import AddEditAnimalPage from './pages/AddEditAnimalPage'
 import FarmerOrdersPage from './pages/FarmerOrdersPage'
-import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
   return (
@@ -66,7 +64,7 @@ function App() {
             path="/farmer/dashboard"
             element={
               <ProtectedRoute allowedRole="farmer">
-                <FarmerDashboardPage />
+                <Navigate to="/farmer/listings" replace />
               </ProtectedRoute>
             }
           />
@@ -103,7 +101,7 @@ function App() {
             }
           />
 
-          <Route path="*" element={<NotFoundPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <MobileTabBar />

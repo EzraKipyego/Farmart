@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Star, BadgeCheck } from 'lucide-react'
-import AnimalImage from '../common/AnimalImage'
+import AnimalImage from '../../components/common/AnimalImage'
 
 function AnimalCard({ animal }) {
   return (
