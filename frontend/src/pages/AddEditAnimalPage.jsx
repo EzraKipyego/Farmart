@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { AlertCircle, Loader2, ChevronLeft } from 'lucide-react'
+import { AlertCircle, Loader2, ChevronLeft, Upload, Link as LinkIcon } from 'lucide-react'
 import { addAnimal, editAnimal, loadAnimalDetail } from '../features/animals/animalsSlice'
 import { animalTypes, breedsByType } from '../data/mockAnimals'
+import AnimalImage from '../components/common/AnimalImage'
+
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
 
 const emptyForm = {
   type: 'Cattle',
@@ -15,6 +19,7 @@ const emptyForm = {
   price: '',
   location: '',
   description: '',
+  image: '',
 }
 
 function AddEditAnimalPage() {
@@ -27,6 +32,7 @@ function AddEditAnimalPage() {
 
   const [form, setForm] = useState(emptyForm)
   const [formError, setFormError] = useState(null)
+  const [imageError, setImageError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [appliedId, setAppliedId] = useState(null)
@@ -51,11 +57,44 @@ function AddEditAnimalPage() {
       price: loadedAnimal.price,
       location: loadedAnimal.location,
       description: loadedAnimal.description || '',
+      image: loadedAnimal.image || '',
     })
   }
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value, ...(field === 'type' ? { breed: '' } : {}) }))
+  }
+
+  function handleImageUrlChange(value) {
+    setImageError(null)
+    handleChange('image', value)
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setImageError(null)
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setImageError('Please choose a PNG, JPG, or WEBP image.')
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError('Image is too large. Please choose a file under 2MB.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      handleChange('image', reader.result)
+    }
+    reader.onerror = () => {
+      console.error('[AddEditAnimalPage] failed to read image file')
+      setImageError('Could not read that image. Try a different file.')
+    }
+    reader.readAsDataURL(file)
   }
 
   function validate() {
@@ -119,6 +158,39 @@ function AddEditAnimalPage() {
       <h1 className="text-base font-medium text-[#f5f5f0] mb-5">{isEdit ? 'Edit listing' : 'Add a new listing'}</h1>
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <div>
+          <p className="text-xs text-[#8b95a1] mb-1.5">Photo</p>
+          <div className="flex items-center gap-3 mb-3">
+            <AnimalImage
+              type={form.type}
+              src={form.image}
+              size={22}
+              className="w-16 h-16 rounded-lg shrink-0 border border-[#1f2937]"
+            />
+            <label className="flex-1 flex items-center justify-center gap-2 border border-dashed border-[#2a323d] rounded-lg py-3 text-xs text-[#8b95a1] cursor-pointer hover:border-[#2dd4a7] hover:text-[#2dd4a7]">
+              <Upload size={14} aria-hidden="true" />
+              Upload photo
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <LinkIcon size={14} className="text-[#5f6b7a] shrink-0" aria-hidden="true" />
+            <input
+              type="url"
+              value={form.image.startsWith('data:') ? '' : form.image}
+              onChange={(e) => handleImageUrlChange(e.target.value)}
+              placeholder="Or paste an image link"
+              className="w-full bg-[#161b22] border border-[#1f2937] rounded-lg px-3 py-2 text-sm text-[#f5f5f0] placeholder:text-[#5f6b7a] outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+            />
+          </div>
+          {imageError && <p className="text-xs text-[#f87171] mt-2">{imageError}</p>}
+        </div>
+
         <div>
           <label htmlFor="type" className="text-xs text-[#8b95a1] block mb-1.5">
             Animal type
