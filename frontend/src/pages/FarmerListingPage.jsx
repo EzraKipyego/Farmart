@@ -57,7 +57,7 @@ function FarmerListingsPage() {
         <div className="flex flex-col gap-2">
           {farmerListings.map((animal) => (
             <div key={animal.id} className="flex items-center gap-3 bg-[#161b22] border border-[#1f2937] rounded-lg p-3">
-              <AnimalImage type={animal.type} size={20} className="w-12 h-12 rounded-lg shrink-0" />
+            <AnimalImage type={animal.type} src={animal.image} size={20} className="w-12 h-12 rounded-lg shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#f5f5f0] truncate">{animal.breed} — {animal.title}</p>
                 <p className="text-[11px] text-[#8b95a1]">KSh {animal.price.toLocaleString()} · {animal.age} {animal.ageUnit}</p>
