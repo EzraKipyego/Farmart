@@ -9,7 +9,7 @@ function AnimalCard({ animal }) {
       className="block bg-[#161b22] border border-[#1f2937] rounded-xl overflow-hidden hover:border-[#2a323d] outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
     >
       <div className="relative h-32 sm:h-36">
-        <AnimalImage type={animal.type} size={32} className="w-full h-full" />
+        <AnimalImage type={animal.type} src={animal.image} size={32} className="w-full h-full" />
         {animal.verified && (
           <span className="absolute top-2 left-2 flex items-center gap-1 bg-[#0d1117]/80 text-[#2dd4a7] text-[10px] px-2 py-1 rounded-md">
             <BadgeCheck size={11} aria-hidden="true" />

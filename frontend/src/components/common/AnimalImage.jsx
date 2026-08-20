@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Beef, Rabbit, Bird } from 'lucide-react'
 
 const iconByType = {
@@ -18,9 +19,22 @@ const bgByType = {
   Rabbits: 'bg-violet-500/10 text-violet-400',
 }
 
-function AnimalImage({ type, size = 28, className = '' }) {
+function AnimalImage({ type, src, size = 28, className = '' }) {
+  const [failed, setFailed] = useState(false)
   const Icon = iconByType[type] || Beef
   const colors = bgByType[type] || 'bg-[#161b22] text-[#8b95a1]'
+
+  if (src && !failed) {
+    return (
+      <img
+        src={src}
+        alt=""
+        onError={() => setFailed(true)}
+        className={`object-cover ${className}`}
+      />
+    )
+  }
+
   return (
     <div className={`flex items-center justify-center ${colors} ${className}`}>
       <Icon size={size} aria-hidden="true" />

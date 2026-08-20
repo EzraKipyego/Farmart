@@ -40,6 +40,7 @@ const cartSlice = createSlice({
           price: animal.price,
           location: animal.location,
           farmerId: animal.farmerId,
+          image: animal.image || '',
           quantity: 1,
         })
       }

@@ -47,7 +47,7 @@ function CartPage() {
       <div className="flex flex-col gap-3 mb-6">
         {items.map((item) => (
           <div key={item.animalId} className="flex gap-3 bg-[#161b22] border border-[#1f2937] rounded-lg p-3">
-            <AnimalImage type={item.type} size={22} className="w-14 h-14 rounded-lg shrink-0" />
+            <AnimalImage type={item.type} src={item.image} size={22} className="w-14 h-14 rounded-lg shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-[#f5f5f0] truncate">{item.title}</p>
               <p className="text-[11px] text-[#8b95a1] mb-2">{item.location}</p>

@@ -1,8 +1,32 @@
 import api, { normalizeApiError } from './api'
 import { mockAnimals } from '../data/mockAnimals'
 
+const LOCAL_LISTINGS_KEY = 'farmart_local_listings'
+
 function isBackendUnreachable(error) {
   return error?.status === null
+}
+
+function loadLocalListings() {
+  try {
+    const raw = localStorage.getItem(LOCAL_LISTINGS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch (error) {
+    console.error('[animalService] failed to parse local listings, resetting store:', error)
+    return []
+  }
+}
+
+function saveLocalListings(listings) {
+  try {
+    localStorage.setItem(LOCAL_LISTINGS_KEY, JSON.stringify(listings))
+  } catch (error) {
+    console.error('[animalService] failed to persist local listings:', error)
+  }
+}
+
+function getAllAnimals() {
+  return [...loadLocalListings(), ...mockAnimals]
 }
 
 export async function fetchAnimals(filters = {}) {
@@ -37,7 +61,7 @@ export async function fetchAnimalById(id) {
     const normalized = normalizeApiError(error)
     if (isBackendUnreachable(normalized)) {
       console.warn('[animalService] backend unreachable, using local sample data:', normalized.message)
-      const found = mockAnimals.find((a) => a.id === id)
+      const found = getAllAnimals().find((a) => a.id === id)
       if (!found) throw { message: 'Animal not found', status: 404 }
       return found
     }
@@ -51,8 +75,25 @@ export async function createAnimal(payload) {
     const response = await api.post('/animals', payload)
     return response.data
   } catch (error) {
-    console.error('[animalService] createAnimal failed:', error)
-    throw normalizeApiError(error)
+    const normalized = normalizeApiError(error)
+    if (isBackendUnreachable(normalized)) {
+      console.warn('[animalService] backend unreachable, saving listing locally:', normalized.message)
+      const listings = loadLocalListings()
+      const newAnimal = {
+        ...payload,
+        id: `local_${Date.now()}`,
+        verified: false,
+        vaccinated: false,
+        healthCertified: false,
+        farmerRating: null,
+        createdAt: new Date().toISOString().slice(0, 10),
+      }
+      listings.unshift(newAnimal)
+      saveLocalListings(listings)
+      return newAnimal
+    }
+    console.error('[animalService] createAnimal failed:', normalized)
+    throw normalized
   }
 }
 
@@ -61,8 +102,20 @@ export async function updateAnimal(id, payload) {
     const response = await api.put(`/animals/${id}`, payload)
     return response.data
   } catch (error) {
-    console.error('[animalService] updateAnimal failed:', error)
-    throw normalizeApiError(error)
+    const normalized = normalizeApiError(error)
+    if (isBackendUnreachable(normalized)) {
+      console.warn('[animalService] backend unreachable, updating listing locally:', normalized.message)
+      const listings = loadLocalListings()
+      const index = listings.findIndex((a) => a.id === id)
+      if (index === -1) {
+        throw { message: 'This listing was created before local storage was cleared and can no longer be edited.', status: 404 }
+      }
+      listings[index] = { ...listings[index], ...payload, id }
+      saveLocalListings(listings)
+      return listings[index]
+    }
+    console.error('[animalService] updateAnimal failed:', normalized)
+    throw normalized
   }
 }
 
@@ -71,8 +124,15 @@ export async function deleteAnimal(id) {
     const response = await api.delete(`/animals/${id}`)
     return response.data
   } catch (error) {
-    console.error('[animalService] deleteAnimal failed:', error)
-    throw normalizeApiError(error)
+    const normalized = normalizeApiError(error)
+    if (isBackendUnreachable(normalized)) {
+      console.warn('[animalService] backend unreachable, deleting listing locally:', normalized.message)
+      const listings = loadLocalListings().filter((a) => a.id !== id)
+      saveLocalListings(listings)
+      return { id, deleted: true }
+    }
+    console.error('[animalService] deleteAnimal failed:', normalized)
+    throw normalized
   }
 }
 
@@ -84,7 +144,7 @@ export async function fetchFarmerAnimals(farmerId) {
     const normalized = normalizeApiError(error)
     if (isBackendUnreachable(normalized)) {
       console.warn('[animalService] backend unreachable, using local sample data:', normalized.message)
-      return mockAnimals.filter((a) => a.farmerId === farmerId)
+      return getAllAnimals().filter((a) => a.farmerId === farmerId)
     }
     console.error('[animalService] fetchFarmerAnimals failed:', normalized)
     throw normalized
@@ -92,7 +152,7 @@ export async function fetchFarmerAnimals(farmerId) {
 }
 
 function filterMockAnimals(filters) {
-  return mockAnimals.filter((animal) => {
+  return getAllAnimals().filter((animal) => {
     if (filters.type && filters.type !== 'All animals' && animal.type !== filters.type) return false
     if (filters.breed && animal.breed !== filters.breed) return false
     if (filters.search) {

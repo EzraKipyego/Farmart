@@ -51,7 +51,7 @@ function AnimalDetailPage() {
 
       <div className="grid sm:grid-cols-2 gap-6">
         <div>
-          <AnimalImage type={animal.type} size={56} className="w-full h-56 sm:h-72 rounded-xl" />
+          <AnimalImage type={animal.type} src={animal.image} size={56} className="w-full h-56 sm:h-72 rounded-xl" />
         </div>
 
         <div>
