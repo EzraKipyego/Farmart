@@ -1,16 +1,76 @@
-# React + Vite
+# Farmart Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React-based frontend for the Farmart platform — connecting farmers and buyers in a seamless marketplace experience.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** with Vite
+- **Redux Toolkit** for state management
+- **React Router DOM** for navigation
+- **Tailwind CSS** for styling
+- **Axios** for API requests
+- **Jest** + **Testing Library** for testing
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js >= 18
+- npm
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Installation
+
+```bash
+cd frontend
+npm install
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in the required values:
+
+```bash
+cp .env.example .env
+```
+
+### Running the App
+
+```bash
+npm run dev
+```
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+### Running Tests
+
+```bash
+npm test
+```
+
+## Project Structure
+
+```
+src/
+├── app/          # Redux store setup
+├── components/   # Reusable UI components
+├── config/       # App configuration
+├── data/         # Static/mock data
+├── features/     # Redux slices and feature logic
+├── pages/        # Route-level page components
+├── services/     # API service calls
+├── App.jsx
+└── main.jsx
+```
+
+## Contributors
+
+| Name | Role |
+|------|------|
+| Ezra Kipyego | Contributor |
+| Hiel Sang | Contributor |
+| Felix Macharia | Contributor |
+| Emmanuel Torris | Contributor |
