@@ -7,7 +7,7 @@ import cartReducer, {
   removeFromCart,
 } from './features/cart/cartSlice'
 import animalsReducer, { setFilters, clearFilters } from './features/animals/animalsSlice'
-import AnimalCard from './components/animals/AnimalCard'
+import AnimalCard from './Components/animals/AnimalCard'
 
 const sampleAnimal = {
   id: 'an_1042',
