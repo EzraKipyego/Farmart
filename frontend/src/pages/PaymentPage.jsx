@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Smartphone, Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
 import { startStkPush, pollPaymentStatus, resetPayment } from '../features/payment/paymentSlice'
+import { clearCart } from '../features/cart/cartSlice'
 
 function PaymentPage() {
   const location = useLocation()
@@ -11,7 +12,7 @@ function PaymentPage() {
   const { phase, checkoutRequestId, error } = useSelector((state) => state.payment)
 
   const orderId = location.state?.orderId
-  const amount = location.state?.amount
+  const amount = Number(location.state?.amount)
 
   const [phone, setPhone] = useState('')
   const [phoneError, setPhoneError] = useState(null)
@@ -24,11 +25,20 @@ function PaymentPage() {
 
   useEffect(() => {
     if (phase === 'pending' && checkoutRequestId) {
-      dispatch(pollPaymentStatus(checkoutRequestId))
+      const timer = setTimeout(() => {
+        dispatch(pollPaymentStatus(checkoutRequestId))
+      }, 3000)
+      return () => clearTimeout(timer)
     }
   }, [phase, checkoutRequestId, dispatch])
 
-  if (!amount) {
+  useEffect(() => {
+    if (phase === 'success') {
+      dispatch(clearCart())
+    }
+  }, [phase, dispatch])
+
+  if (!Number.isFinite(amount) || amount <= 0) {
     return <Navigate to="/" replace />
   }
 
@@ -58,6 +68,12 @@ function PaymentPage() {
 
   function handleRetry() {
     dispatch(resetPayment())
+  }
+
+  function handleCheckStatus() {
+    if (checkoutRequestId) {
+      dispatch(pollPaymentStatus(checkoutRequestId))
+    }
   }
 
   return (
@@ -107,7 +123,14 @@ function PaymentPage() {
             <Clock size={20} className="text-[#facc15]" aria-hidden="true" />
           </div>
           <p className="text-sm text-[#f5f5f0] mb-1">Check your phone</p>
-          <p className="text-xs text-[#8b95a1]">Enter your M-Pesa PIN on the prompt to complete payment.</p>
+          <p className="text-xs text-[#8b95a1] mb-4">Enter your M-Pesa PIN on the prompt, then confirm below.</p>
+          <button
+            type="button"
+            onClick={handleCheckStatus}
+            className="w-full border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+          >
+            I have completed payment
+          </button>
         </div>
       )}
 
