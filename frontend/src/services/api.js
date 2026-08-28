@@ -17,6 +17,16 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // Debug: log whether Authorization header will be sent for payment requests
+    try {
+      if (config.url && config.url.includes('/payments/stk-push')) {
+        // do not log the token itself, just its presence
+        // eslint-disable-next-line no-console
+        console.debug('[api] /payments/stk-push Authorization present:', !!config.headers.Authorization)
+      }
+    } catch (e) {
+      /* ignore */
+    }
     return config
   },
   (error) => {

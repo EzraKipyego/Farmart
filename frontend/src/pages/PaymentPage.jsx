@@ -64,7 +64,12 @@ function PaymentPage() {
     }
 
     try {
-      await dispatch(startStkPush({ orderId, phone: normalizePhone(phone), amount: Math.round(amount) })).unwrap()
+      const normalizedPhone = normalizePhone(phone)
+      const roundedAmount = Math.round(amount)
+      const payload = { order_id: orderId, phone: normalizedPhone, amount: roundedAmount }
+      console.log('Sending Payload:', payload)
+
+      await dispatch(startStkPush({ orderId, phone: normalizedPhone, amount: roundedAmount })).unwrap()
     } catch (err) {
       console.error('[PaymentPage] STK push failed:', err)
     }
