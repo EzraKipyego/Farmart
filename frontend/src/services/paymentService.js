@@ -9,11 +9,21 @@ function normalizePaymentError(error) {
 
 export async function initiateStkPush({ orderId, phone, amount }) {
   try {
-    const response = await api.post('/payments/stk-push', { order_id: orderId, phone, amount })
+    // Ensure payload conforms to backend expectations: clean phone and integer amount
+    const normalizedPhone = String(phone || '').replace(/\s+/g, '').replace(/^\+/, '')
+    const cleanedPhone = normalizedPhone.startsWith('0') ? `254${normalizedPhone.slice(1)}` : normalizedPhone
+    const roundedAmount = Math.round(Number(amount))
+
+    const payload = { order_id: orderId, phone: cleanedPhone, amount: roundedAmount }
+    console.log('Sending Payload:', payload)
+
+    const response = await api.post('/payments/stk-push', payload)
     return response.data
   } catch (error) {
     const normalized = normalizePaymentError(error)
+    // Log backend 400 details for easier diagnosis in production
     console.error('[paymentService] initiateStkPush failed:', normalized)
+    console.error('Backend 400 Error Details:', error.response?.data)
     throw normalized
   }
 }
