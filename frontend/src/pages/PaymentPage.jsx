@@ -12,6 +12,7 @@ function PaymentPage() {
   const { phase, checkoutRequestId, error } = useSelector((state) => state.payment)
 
   const orderId = location.state?.orderId
+  const productName = location.state?.productName
   const amount = Number(location.state?.amount)
 
   const [phone, setPhone] = useState('')
@@ -43,7 +44,13 @@ function PaymentPage() {
   }
 
   function validatePhone(value) {
-    return /^0[71]\d{8}$/.test(value)
+    return /^(?:0[71]\d{8}|\+?254[71]\d{8})$/.test(value)
+  }
+
+  function normalizePhone(value) {
+    if (value.startsWith('+254')) return value.slice(1)
+    if (value.startsWith('0')) return `254${value.slice(1)}`
+    return value
   }
 
   async function handlePay(e) {
@@ -56,7 +63,7 @@ function PaymentPage() {
     }
 
     try {
-      await dispatch(startStkPush({ orderId, phone, amount })).unwrap()
+      await dispatch(startStkPush({ orderId, phone: normalizePhone(phone), amount })).unwrap()
     } catch (err) {
       console.error('[PaymentPage] STK push failed:', err)
     }
@@ -83,7 +90,8 @@ function PaymentPage() {
       <div className="bg-[#161b22] border border-[#1f2937] rounded-lg p-4 mb-5">
         <p className="text-xs text-[#8b95a1] mb-1">Amount due</p>
         <p className="text-xl font-medium text-[#f5f5f0]">KSh {amount.toLocaleString()}</p>
-        {orderId && <p className="text-[11px] text-[#8b95a1] mt-1">Order #{orderId}</p>}
+        {productName ? <p className="text-[11px] text-[#8b95a1] mt-1">Order: {productName}</p> : null}
+        {orderId && <p className="text-[10px] text-[#5f6b7a] mt-1">Reference #{orderId}</p>}
       </div>
 
       {(phase === 'idle' || phase === 'requesting') && (

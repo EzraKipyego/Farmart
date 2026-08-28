@@ -24,6 +24,9 @@ function CheckoutPage() {
     address: '',
   })
   const [formError, setFormError] = useState(null)
+  const [idempotencyKey] = useState(
+    () => globalThis.crypto?.randomUUID?.() || `checkout-${Math.random().toString(36).slice(2)}`,
+  )
 
   if (items.length === 0) {
     return <Navigate to="/cart" replace />
@@ -50,6 +53,7 @@ function CheckoutPage() {
         submitCheckout({
           items,
           deliveryDetails: details,
+          idempotencyKey,
         }),
       ).unwrap()
 
@@ -63,6 +67,7 @@ function CheckoutPage() {
         state: {
           orderId: order.id || order.orderId,
           amount: Number(orderAmount),
+          productName: items[0]?.title,
         },
       })
     } catch (err) {

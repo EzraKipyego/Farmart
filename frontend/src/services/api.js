@@ -51,6 +51,9 @@ api.interceptors.response.use(
 )
 
 export function normalizeApiError(error) {
+  if (error?.status !== undefined && error?.message) {
+    return error
+  }
   if (error.response) {
     return {
       message: error.response.data?.message || error.response.data?.error || 'Something went wrong. Try again.',
