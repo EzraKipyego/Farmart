@@ -32,7 +32,7 @@ function AnimalCard({ animal }) {
             </>
           )}
         </div>
-        <p className="text-sm font-medium text-[#f5f5f0]">KSh {animal.price.toLocaleString()}</p>
+        <p className="text-sm font-medium text-[#f5f5f0]">KSh {Math.round(animal.price).toLocaleString()}</p>
       </div>
     </Link>
   )
