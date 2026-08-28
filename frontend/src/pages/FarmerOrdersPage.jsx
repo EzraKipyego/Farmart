@@ -65,7 +65,7 @@ function FarmerOrdersPage() {
                 </p>
               ))}
 
-              <p className="text-sm text-[#f5f5f0] font-medium mt-2 mb-3">KSh {order.total.toLocaleString()}</p>
+              <p className="text-sm text-[#f5f5f0] font-medium mt-2 mb-3">KSh {Math.round(order.total).toLocaleString()}</p>
 
               {order.status === 'pending' && (
                 <div className="flex gap-2">

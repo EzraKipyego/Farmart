@@ -33,7 +33,7 @@ function CheckoutPage() {
   }
 
   const hasDeliveryFee = Number.isFinite(DELIVERY_FEE) && DELIVERY_FEE >= 0
-  const estimatedTotal = subtotal + (hasDeliveryFee ? DELIVERY_FEE : 0)
+  const estimatedTotal = Math.round(subtotal + (hasDeliveryFee ? DELIVERY_FEE : 0))
 
   function handleChange(field, value) {
     setDetails((prev) => ({ ...prev, [field]: value }))
@@ -66,7 +66,7 @@ function CheckoutPage() {
       navigate('/payment', {
         state: {
           orderId: order.id || order.orderId,
-          amount: Number(orderAmount),
+          amount: Math.round(Number(orderAmount)),
           productName: items[0]?.title,
         },
       })
@@ -144,12 +144,12 @@ function CheckoutPage() {
         <div className="bg-[#161b22] border border-[#1f2937] rounded-lg p-4 mb-4">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-[#8b95a1]">Subtotal</span>
-            <span className="text-[#f5f5f0]">KSh {subtotal.toLocaleString()}</span>
+            <span className="text-[#f5f5f0]">KSh {Math.round(subtotal).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm mb-2">
             <span className="text-[#8b95a1]">Delivery</span>
             <span className="text-[#f5f5f0]">
-              {hasDeliveryFee ? `KSh ${DELIVERY_FEE.toLocaleString()}` : 'Calculated at checkout'}
+              {hasDeliveryFee ? `KSh ${Math.round(DELIVERY_FEE).toLocaleString()}` : 'Calculated at checkout'}
             </span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-[#1f2937]">

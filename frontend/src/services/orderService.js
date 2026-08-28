@@ -4,7 +4,10 @@ export async function checkout({ items, deliveryDetails, idempotencyKey }) {
   try {
     const response = await api.post(
       '/checkout',
-      { items, delivery_details: deliveryDetails },
+      {
+        items: items.map((item) => ({ ...item, price: Math.round(Number(item.price)) })),
+        delivery_details: deliveryDetails,
+      },
       { headers: { 'Idempotency-Key': idempotencyKey } },
     )
     return response.data

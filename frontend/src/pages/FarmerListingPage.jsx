@@ -60,7 +60,7 @@ function FarmerListingsPage() {
             <AnimalImage type={animal.type} src={animal.image} size={20} className="w-12 h-12 rounded-lg shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#f5f5f0] truncate">{animal.breed} — {animal.title}</p>
-                <p className="text-[11px] text-[#8b95a1]">KSh {animal.price.toLocaleString()} · {animal.age} {animal.ageUnit}</p>
+                <p className="text-[11px] text-[#8b95a1]">KSh {Math.round(animal.price).toLocaleString()} · {animal.age} {animal.ageUnit}</p>
               </div>
               <Link
                 to={`/farmer/listings/${animal.id}/edit`}

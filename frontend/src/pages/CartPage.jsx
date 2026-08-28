@@ -78,7 +78,7 @@ function CartPage() {
                 <Trash2 size={15} aria-hidden="true" />
               </button>
               <p className="text-sm text-[#f5f5f0] font-medium">
-                KSh {(item.price * item.quantity).toLocaleString()}
+                KSh {Math.round(item.price * item.quantity).toLocaleString()}
               </p>
             </div>
           </div>
@@ -87,7 +87,7 @@ function CartPage() {
 
       <div className="flex items-center justify-between mb-5">
         <p className="text-sm text-[#8b95a1]">Total</p>
-        <p className="text-lg font-medium text-[#f5f5f0]">KSh {total.toLocaleString()}</p>
+        <p className="text-lg font-medium text-[#f5f5f0]">KSh {Math.round(total).toLocaleString()}</p>
       </div>
 
       <button

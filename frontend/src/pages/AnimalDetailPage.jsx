@@ -112,7 +112,7 @@ function AnimalDetailPage() {
           {animal.description && <p className="text-sm text-[#8b95a1] mb-5 leading-relaxed">{animal.description}</p>}
 
           <p className="text-[11px] text-[#8b95a1] mb-1">Price</p>
-          <p className="text-2xl font-medium text-[#f5f5f0] mb-4">KSh {animal.price.toLocaleString()}</p>
+          <p className="text-2xl font-medium text-[#f5f5f0] mb-4">KSh {Math.round(animal.price).toLocaleString()}</p>
 
           <div className="flex items-center gap-3 mb-5">
             <span className="text-xs text-[#8b95a1]">Quantity</span>

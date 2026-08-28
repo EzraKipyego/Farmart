@@ -57,12 +57,12 @@ function OrdersPage() {
               </div>
               {order.items.map((item) => (
                 <p key={item.animalId} className="text-xs text-[#8b95a1] mb-0.5">
-                  {item.title} · qty {item.quantity} · KSh {item.price.toLocaleString()}
+                  {item.title} · qty {item.quantity} · KSh {Math.round(item.price).toLocaleString()}
                 </p>
               ))}
               <div className="flex justify-between items-center mt-3 pt-3 border-t border-[#1f2937]">
                 <p className="text-[11px] text-[#8b95a1]">Seller: {order.farmerName}</p>
-                <p className="text-sm text-[#f5f5f0] font-medium">KSh {order.total.toLocaleString()}</p>
+                <p className="text-sm text-[#f5f5f0] font-medium">KSh {Math.round(order.total).toLocaleString()}</p>
               </div>
             </div>
           ))}
