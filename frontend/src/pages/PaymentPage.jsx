@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Smartphone, Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
 import { startStkPush, pollPaymentStatus, resetPayment } from '../features/payment/paymentSlice'
+import { clearCart } from '../features/cart/cartSlice'
 
 function PaymentPage() {
   const location = useLocation()
@@ -11,7 +12,8 @@ function PaymentPage() {
   const { phase, checkoutRequestId, error } = useSelector((state) => state.payment)
 
   const orderId = location.state?.orderId
-  const amount = location.state?.amount
+  const productName = location.state?.productName
+  const amount = Number(location.state?.amount)
 
   const [phone, setPhone] = useState('')
   const [phoneError, setPhoneError] = useState(null)
@@ -24,16 +26,31 @@ function PaymentPage() {
 
   useEffect(() => {
     if (phase === 'pending' && checkoutRequestId) {
-      dispatch(pollPaymentStatus(checkoutRequestId))
+      const timer = setTimeout(() => {
+        dispatch(pollPaymentStatus(checkoutRequestId))
+      }, 3000)
+      return () => clearTimeout(timer)
     }
   }, [phase, checkoutRequestId, dispatch])
 
-  if (!amount) {
+  useEffect(() => {
+    if (phase === 'success') {
+      dispatch(clearCart())
+    }
+  }, [phase, dispatch])
+
+  if (!Number.isFinite(amount) || amount <= 0) {
     return <Navigate to="/" replace />
   }
 
   function validatePhone(value) {
-    return /^0[71]\d{8}$/.test(value)
+    return /^(?:0[71]\d{8}|\+?254[71]\d{8})$/.test(value)
+  }
+
+  function normalizePhone(value) {
+    if (value.startsWith('+254')) return value.slice(1)
+    if (value.startsWith('0')) return `254${value.slice(1)}`
+    return value
   }
 
   async function handlePay(e) {
@@ -46,7 +63,7 @@ function PaymentPage() {
     }
 
     try {
-      await dispatch(startStkPush({ orderId, phone, amount })).unwrap()
+      await dispatch(startStkPush({ orderId, phone: normalizePhone(phone), amount })).unwrap()
     } catch (err) {
       console.error('[PaymentPage] STK push failed:', err)
     }
@@ -60,6 +77,12 @@ function PaymentPage() {
     dispatch(resetPayment())
   }
 
+  function handleCheckStatus() {
+    if (checkoutRequestId) {
+      dispatch(pollPaymentStatus(checkoutRequestId))
+    }
+  }
+
   return (
     <div className="px-4 sm:px-6 pt-4 pb-10 max-w-sm mx-auto">
       <h1 className="text-base font-medium text-[#f5f5f0] mb-5">Payment</h1>
@@ -67,7 +90,8 @@ function PaymentPage() {
       <div className="bg-[#161b22] border border-[#1f2937] rounded-lg p-4 mb-5">
         <p className="text-xs text-[#8b95a1] mb-1">Amount due</p>
         <p className="text-xl font-medium text-[#f5f5f0]">KSh {amount.toLocaleString()}</p>
-        {orderId && <p className="text-[11px] text-[#8b95a1] mt-1">Order #{orderId}</p>}
+        {productName ? <p className="text-[11px] text-[#8b95a1] mt-1">Order: {productName}</p> : null}
+        {orderId && <p className="text-[10px] text-[#5f6b7a] mt-1">Reference #{orderId}</p>}
       </div>
 
       {(phase === 'idle' || phase === 'requesting') && (
@@ -107,7 +131,14 @@ function PaymentPage() {
             <Clock size={20} className="text-[#facc15]" aria-hidden="true" />
           </div>
           <p className="text-sm text-[#f5f5f0] mb-1">Check your phone</p>
-          <p className="text-xs text-[#8b95a1]">Enter your M-Pesa PIN on the prompt to complete payment.</p>
+          <p className="text-xs text-[#8b95a1] mb-4">Enter your M-Pesa PIN on the prompt, then confirm below.</p>
+          <button
+            type="button"
+            onClick={handleCheckStatus}
+            className="w-full border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+          >
+            I have completed payment
+          </button>
         </div>
       )}
 

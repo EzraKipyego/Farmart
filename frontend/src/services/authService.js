@@ -2,68 +2,6 @@ import api, { normalizeApiError } from './api'
 
 const TOKEN_KEY = 'farmart_token'
 const USER_KEY = 'farmart_user'
-const MOCK_USERS_KEY = 'farmart_mock_users'
-
-function isBackendUnreachable(error) {
-  return error?.status === null
-}
-
-function loadMockUsers() {
-  try {
-    const raw = localStorage.getItem(MOCK_USERS_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch (error) {
-    console.error('[authService] failed to parse mock users, resetting store:', error)
-    return []
-  }
-}
-
-function saveMockUsers(users) {
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users))
-}
-
-function mockRegister({ name, email, password, role, phone, county }) {
-  const users = loadMockUsers()
-  const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-
-  if (existing) {
-    throw { message: 'An account with this email already exists', status: 409 }
-  }
-
-  const user = {
-    id: `local_${Date.now()}`,
-    name,
-    email,
-    password,
-    role,
-    phone: phone || '',
-    county: county || '',
-  }
-
-  users.push(user)
-  saveMockUsers(users)
-
-  const { password: _password, ...safeUser } = user
-  return {
-    token: `mock.${btoa(email)}.${Date.now()}`,
-    user: safeUser,
-  }
-}
-
-function mockLogin({ email, password }) {
-  const users = loadMockUsers()
-  const match = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-
-  if (!match || match.password !== password) {
-    throw { message: 'Incorrect email or password', status: 401 }
-  }
-
-  const { password: _password, ...safeUser } = match
-  return {
-    token: `mock.${btoa(email)}.${Date.now()}`,
-    user: safeUser,
-  }
-}
 
 export async function register(payload) {
   try {
@@ -71,10 +9,6 @@ export async function register(payload) {
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
-    if (isBackendUnreachable(normalized)) {
-      console.warn('[authService] backend unreachable, registering locally:', normalized.message)
-      return mockRegister(payload)
-    }
     console.error('[authService] register failed:', normalized)
     throw normalized
   }
@@ -86,10 +20,6 @@ export async function login(payload) {
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
-    if (isBackendUnreachable(normalized)) {
-      console.warn('[authService] backend unreachable, checking local accounts:', normalized.message)
-      return mockLogin(payload)
-    }
     console.error('[authService] login failed:', normalized)
     throw normalized
   }
@@ -111,10 +41,6 @@ export async function updateProfile(payload) {
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
-    if (isBackendUnreachable(normalized)) {
-      console.warn('[authService] backend unreachable, applying profile update locally:', normalized.message)
-      return payload
-    }
     console.error('[authService] updateProfile failed:', normalized)
     throw normalized
   }

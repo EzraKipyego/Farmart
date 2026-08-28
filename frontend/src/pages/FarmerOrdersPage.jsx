@@ -50,7 +50,8 @@ function FarmerOrdersPage() {
             <div key={order.id} className="bg-[#161b22] border border-[#1f2937] rounded-lg p-4">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="text-sm text-[#f5f5f0]">Order #{order.id}</p>
+                  <p className="text-sm text-[#f5f5f0]">Order: {order.items?.[0]?.title || order.id}</p>
+                  <p className="text-[10px] text-[#5f6b7a]">Reference #{order.id}</p>
                   <p className="text-[11px] text-[#8b95a1]">{order.buyerName}</p>
                 </div>
                 <span className={`text-[10px] px-2 py-1 rounded-md capitalize ${statusStyles[order.status] || 'bg-[#1c2129] text-[#8b95a1]'}`}>

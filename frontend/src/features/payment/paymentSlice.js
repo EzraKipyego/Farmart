@@ -46,18 +46,31 @@ const paymentSlice = createSlice({
         state.error = null
       })
       .addCase(startStkPush.fulfilled, (state, action) => {
+        const checkoutRequestId = action.payload.checkoutRequestId || action.payload.checkout_request_id
+        if (!checkoutRequestId) {
+          state.phase = 'failed'
+          state.error = 'The payment request did not return a checkout reference.'
+          return
+        }
         state.phase = 'pending'
-        state.checkoutRequestId = action.payload.checkoutRequestId
+        state.checkoutRequestId = checkoutRequestId
       })
       .addCase(startStkPush.rejected, (state, action) => {
         state.phase = 'failed'
         state.error = action.payload
       })
       .addCase(pollPaymentStatus.fulfilled, (state, action) => {
-        state.phase = action.payload.status === 'success' ? 'success' : 'failed'
-        if (action.payload.status !== 'success') {
-          state.error = 'Payment was not completed. Try again.'
+        const status = String(action.payload.status || '').toLowerCase()
+        if (['success', 'successful', 'completed', 'paid'].includes(status)) {
+          state.phase = 'success'
+          return
         }
+        if (['pending', 'processing'].includes(status)) {
+          state.phase = 'pending'
+          return
+        }
+        state.phase = 'failed'
+        state.error = action.payload.message || 'Payment was not completed. Try again.'
       })
       .addCase(pollPaymentStatus.rejected, (state, action) => {
         state.phase = 'failed'

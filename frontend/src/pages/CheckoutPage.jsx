@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { AlertCircle, Loader2 } from 'lucide-react'
-import { selectCartItems, selectCartTotal, clearCart } from '../features/cart/cartSlice'
+import { selectCartItems, selectCartTotal } from '../features/cart/cartSlice'
 import { submitCheckout } from '../features/orders/ordersSlice'
 import { kenyanCounties } from '../data/mockAnimals'
 
-const DELIVERY_FEE = 2500
+const configuredDeliveryFee = import.meta.env.VITE_DELIVERY_FEE?.trim()
+const DELIVERY_FEE = configuredDeliveryFee ? Number(configuredDeliveryFee) : null
 
 function CheckoutPage() {
   const items = useSelector(selectCartItems)
@@ -23,12 +24,16 @@ function CheckoutPage() {
     address: '',
   })
   const [formError, setFormError] = useState(null)
+  const [idempotencyKey] = useState(
+    () => globalThis.crypto?.randomUUID?.() || `checkout-${Math.random().toString(36).slice(2)}`,
+  )
 
   if (items.length === 0) {
     return <Navigate to="/cart" replace />
   }
 
-  const total = subtotal + DELIVERY_FEE
+  const hasDeliveryFee = Number.isFinite(DELIVERY_FEE) && DELIVERY_FEE >= 0
+  const estimatedTotal = subtotal + (hasDeliveryFee ? DELIVERY_FEE : 0)
 
   function handleChange(field, value) {
     setDetails((prev) => ({ ...prev, [field]: value }))
@@ -48,11 +53,23 @@ function CheckoutPage() {
         submitCheckout({
           items,
           deliveryDetails: details,
+          idempotencyKey,
         }),
       ).unwrap()
 
-      dispatch(clearCart())
-      navigate('/payment', { state: { orderId: order.id || order.orderId, amount: total } })
+      const orderAmount = order.amount ?? order.total
+      if (!Number.isFinite(Number(orderAmount))) {
+        setFormError('The server did not return a valid order total. Please try again.')
+        return
+      }
+
+      navigate('/payment', {
+        state: {
+          orderId: order.id || order.orderId,
+          amount: Number(orderAmount),
+          productName: items[0]?.title,
+        },
+      })
     } catch (err) {
       console.error('[CheckoutPage] checkout failed:', err)
     }
@@ -131,11 +148,15 @@ function CheckoutPage() {
           </div>
           <div className="flex justify-between text-sm mb-2">
             <span className="text-[#8b95a1]">Delivery</span>
-            <span className="text-[#f5f5f0]">KSh {DELIVERY_FEE.toLocaleString()}</span>
+            <span className="text-[#f5f5f0]">
+              {hasDeliveryFee ? `KSh ${DELIVERY_FEE.toLocaleString()}` : 'Calculated at checkout'}
+            </span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-[#1f2937]">
             <span className="text-[#f5f5f0] font-medium">Total</span>
-            <span className="text-[#2dd4a7] font-medium">KSh {total.toLocaleString()}</span>
+            <span className="text-[#2dd4a7] font-medium">
+              {hasDeliveryFee ? `KSh ${estimatedTotal.toLocaleString()}` : 'Calculated at checkout'}
+            </span>
           </div>
         </div>
 
