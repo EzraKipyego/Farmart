@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { Search, ShoppingCart, Sprout, LogOut } from 'lucide-react'
+import { Search, ShoppingCart, Sprout, LogOut, ClipboardList, User } from 'lucide-react'
 import { selectCartCount } from '../../features/cart/cartSlice'
 import { logout } from '../../features/auth/authSlice'
 
@@ -50,6 +50,11 @@ function Navbar() {
             Dashboard
           </NavLink>
         )}
+        {isAuthenticated && (
+          <NavLink to={user?.role === 'farmer' ? '/farmer/orders' : '/orders'} className={({ isActive }) => (isActive ? 'text-[#f5f5f0]' : 'hover:text-[#f5f5f0]')}>
+            Orders
+          </NavLink>
+        )}
       </nav>
 
       <div className="flex-1" />
@@ -63,6 +68,11 @@ function Navbar() {
             </span>
           )}
         </Link>
+        {isAuthenticated && (
+          <Link to="/profile" aria-label="Profile" className="text-[#8b95a1] hover:text-[#f5f5f0] outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] rounded-md">
+            <User size={18} aria-hidden="true" />
+          </Link>
+        )}
         {isAuthenticated ? (
           <button
             onClick={handleLogout}
