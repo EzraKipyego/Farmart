@@ -1,8 +1,21 @@
-import { X, SlidersHorizontal } from 'lucide-react'
-import { breedsByType, ageRanges } from '../../data/mockAnimals'
+import { useState } from 'react'
+import { X, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { animalTypes, breedsByType, ageRanges } from '../../data/mockAnimals'
 
 function FilterDrawer({ open, onClose, filters, onChange, activeType }) {
   const breeds = breedsByType[activeType] || []
+  const [expandedSections, setExpandedSections] = useState({
+    type: true,
+    breed: false,
+    age: false,
+  })
+
+  function toggleSection(section) {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }))
+  }
 
   function toggleBreed(breed) {
     onChange({ breed: filters.breed === breed ? null : breed })
@@ -29,50 +42,110 @@ function FilterDrawer({ open, onClose, filters, onChange, activeType }) {
           </button>
         </div>
 
-        {breeds.length > 0 && (
-          <div className="mb-6">
-            <p className="text-xs text-[#8b95a1] mb-2">Breed</p>
-            <div className="flex flex-wrap gap-2">
-              {breeds.map((breed) => (
-                <button
-                  key={breed}
-                  onClick={() => toggleBreed(breed)}
-                  className={`text-xs px-3 py-1.5 rounded-full border outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
-                    filters.breed === breed
-                      ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7]'
-                      : 'border-[#1f2937] text-[#8b95a1]'
-                  }`}
-                >
-                  {breed}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="space-y-3 mb-6">
+          <div className="rounded-lg border border-[#1f2937] bg-[#0d1117] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleSection('type')}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-[#8b95a1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+            >
+              <span>Type</span>
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${expandedSections.type ? 'rotate-180 text-[#2dd4a7]' : ''}`}
+              />
+            </button>
 
-        <div className="mb-6">
-          <p className="text-xs text-[#8b95a1] mb-2">Age</p>
-          <div className="flex flex-wrap gap-2">
-            {ageRanges.map((range) => {
-              const isActive = filters.minAge === range.min && filters.maxAge === range.max
-              return (
-                <button
-                  key={range.label}
-                  onClick={() => toggleAgeRange(range)}
-                  className={`text-xs px-3 py-1.5 rounded-full border outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
-                    isActive ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7]' : 'border-[#1f2937] text-[#8b95a1]'
-                  }`}
-                >
-                  {range.label}
-                </button>
-              )
-            })}
+            {expandedSections.type && (
+              <div className="border-t border-[#1f2937] p-2 flex flex-wrap gap-2">
+                {animalTypes.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => onChange({ type, breed: null })}
+                    className={`text-xs px-3 py-1.5 rounded-full border outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
+                      filters.type === type
+                        ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7]'
+                        : 'border-[#1f2937] text-[#8b95a1]'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {breeds.length > 0 && (
+            <div className="rounded-lg border border-[#1f2937] bg-[#0d1117] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection('breed')}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-[#8b95a1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+              >
+                <span>Breed</span>
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${expandedSections.breed ? 'rotate-180 text-[#2dd4a7]' : ''}`}
+                />
+              </button>
+
+              {expandedSections.breed && (
+                <div className="border-t border-[#1f2937] p-2 flex flex-wrap gap-2">
+                  {breeds.map((breed) => (
+                    <button
+                      key={breed}
+                      onClick={() => toggleBreed(breed)}
+                      className={`text-xs px-3 py-1.5 rounded-full border outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
+                        filters.breed === breed
+                          ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7]'
+                          : 'border-[#1f2937] text-[#8b95a1]'
+                      }`}
+                    >
+                      {breed}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="rounded-lg border border-[#1f2937] bg-[#0d1117] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleSection('age')}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-[#8b95a1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+            >
+              <span>Age</span>
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${expandedSections.age ? 'rotate-180 text-[#2dd4a7]' : ''}`}
+              />
+            </button>
+
+            {expandedSections.age && (
+              <div className="border-t border-[#1f2937] p-2 flex flex-wrap gap-2">
+                {ageRanges.map((range) => {
+                  const isActive = filters.minAge === range.min && filters.maxAge === range.max
+                  return (
+                    <button
+                      key={range.label}
+                      onClick={() => toggleAgeRange(range)}
+                      className={`text-xs px-3 py-1.5 rounded-full border outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
+                        isActive ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7]' : 'border-[#1f2937] text-[#8b95a1]'
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
 
         <button
           onClick={() => {
-            onChange({ breed: null, minAge: null, maxAge: null })
+            onChange({ type: 'All animals', breed: null, minAge: null, maxAge: null })
           }}
           className="text-xs text-[#8b95a1] underline mb-6"
         >
