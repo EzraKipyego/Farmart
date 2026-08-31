@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Search, SlidersHorizontal, PackageSearch } from 'lucide-react'
+import { Search, SlidersHorizontal, PackageSearch, ChevronDown } from 'lucide-react'
 import { loadAnimals, setFilters } from '../features/animals/animalsSlice'
-import { animalTypes } from '../data/mockAnimals'
+import { animalTypes, breedsByType, ageRanges } from '../data/mockAnimals'
 import AnimalCard from '../Components/animals/AnimalCard'
 import FilterDrawer from '../Components/animals/FilterDrawer'
 import Spinner from '../components/common/Spinner'
@@ -16,12 +16,24 @@ function BrowsePage() {
   const [searchParams] = useSearchParams()
   const { items, filters, status, error } = useSelector((state) => state.animals)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [expandedFilters, setExpandedFilters] = useState({
+    type: true,
+    breed: false,
+    age: false,
+  })
   const searchInputRef = useRef(null)
   const currentSearch = searchParams.get('search') || ''
 
   useEffect(() => {
     dispatch(setFilters({ search: currentSearch }))
   }, [dispatch, currentSearch])
+
+  function toggleFilterSection(section) {
+    setExpandedFilters((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }))
+  }
 
   useEffect(() => {
     dispatch(loadAnimals(filters))
@@ -48,7 +60,8 @@ function BrowsePage() {
   const activeFilterCount = [filters.breed, filters.minAge].filter((v) => v != null).length
 
   return (
-    <div className="px-4 sm:px-6 pt-4 pb-24 sm:pb-10 max-w-6xl mx-auto">
+    <div className="px-4 sm:px-6 pt-4 pb-24 sm:pb-10 max-w-7xl mx-auto">
+      {/* Mobile: Search + Filter Drawer */}
       <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 mb-4 sm:hidden">
         <div className="flex-1 flex items-center gap-2 bg-[#161b22] border border-[#1f2937] rounded-lg px-3 py-2">
           <Search size={15} className="text-[#5f6b7a]" aria-hidden="true" />
@@ -76,7 +89,8 @@ function BrowsePage() {
         </button>
       </form>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+      {/* Mobile: Type Filter */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:hidden">
         {animalTypes.map((type) => (
           <button
             key={type}
@@ -92,33 +106,195 @@ function BrowsePage() {
         ))}
       </div>
 
-      {currentSearch && status === 'succeeded' && (
-        <p className="text-xs text-[#8b95a1] mb-3">
-          {items.length > 0
-            ? `${items.length} result${items.length !== 1 ? 's' : ''} for "${currentSearch}"`
-            : `No results for "${currentSearch}"`}
-        </p>
-      )}
+      {/* Desktop: Two-column layout with sidebar */}
+      <div className="hidden sm:grid sm:grid-cols-4 gap-6">
+        {/* Left Sidebar - Filters */}
+        <div className="col-span-1">
+          <div className="sticky top-4 bg-[#161b22] border border-[#1f2937] rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#1f2937]">
+              <SlidersHorizontal size={16} className="text-[#2dd4a7]" aria-hidden="true" />
+              <h3 className="text-sm font-semibold text-[#f5f5f0]">Filters</h3>
+            </div>
 
-      {status === 'loading' && <Spinner label="Loading listings" />}
+            <div className="space-y-2">
+              <div className="rounded-lg border border-[#1f2937] bg-[#0d1117] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection('type')}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-[#8b95a1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+                >
+                  <span>Animal Type</span>
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${expandedFilters.type ? 'rotate-180 text-[#2dd4a7]' : ''}`}
+                  />
+                </button>
 
-      {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
+                {expandedFilters.type && (
+                  <div className="border-t border-[#1f2937] p-2 space-y-2">
+                    {animalTypes.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleTypeChange(type)}
+                        className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition-all outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
+                          filters.type === type
+                            ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7] font-medium'
+                            : 'border-[#1f2937] text-[#8b95a1] hover:border-[#2a323d] hover:text-[#f5f5f0]'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-      {status === 'succeeded' && items.length === 0 && (
-        <EmptyState
-          icon={PackageSearch}
-          title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
-          description="Try a different breed, type, or clear your filters."
-        />
-      )}
+              {(breedsByType[filters.type] || []).length > 0 && (
+                <div className="rounded-lg border border-[#1f2937] bg-[#0d1117] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterSection('breed')}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-[#8b95a1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+                  >
+                    <span>Breed</span>
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform ${expandedFilters.breed ? 'rotate-180 text-[#2dd4a7]' : ''}`}
+                    />
+                  </button>
 
-      {status === 'succeeded' && items.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {items.map((animal) => (
-            <AnimalCard key={animal.id} animal={animal} />
-          ))}
+                  {expandedFilters.breed && (
+                    <div className="border-t border-[#1f2937] p-2 space-y-2 max-h-56 overflow-y-auto">
+                      {(breedsByType[filters.type] || []).map((breed) => (
+                        <button
+                          key={breed}
+                          onClick={() => handleFilterChange({ breed: filters.breed === breed ? null : breed })}
+                          className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition-all outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
+                            filters.breed === breed
+                              ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7] font-medium'
+                              : 'border-[#1f2937] text-[#8b95a1] hover:border-[#2a323d] hover:text-[#f5f5f0]'
+                          }`}
+                        >
+                          {breed}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="rounded-lg border border-[#1f2937] bg-[#0d1117] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection('age')}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-[#8b95a1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+                >
+                  <span>Age Range</span>
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${expandedFilters.age ? 'rotate-180 text-[#2dd4a7]' : ''}`}
+                  />
+                </button>
+
+                {expandedFilters.age && (
+                  <div className="border-t border-[#1f2937] p-2 space-y-2">
+                    {ageRanges.map((range) => {
+                      const isActive = filters.minAge === range.min && filters.maxAge === range.max
+                      return (
+                        <button
+                          key={range.label}
+                          onClick={() => handleFilterChange(isActive ? { minAge: null, maxAge: null } : { minAge: range.min, maxAge: range.max })}
+                          className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition-all outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] ${
+                            isActive
+                              ? 'bg-[#2dd4a7]/10 border-[#2dd4a7] text-[#2dd4a7] font-medium'
+                              : 'border-[#1f2937] text-[#8b95a1] hover:border-[#2a323d] hover:text-[#f5f5f0]'
+                          }`}
+                        >
+                          {range.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {(filters.breed || filters.minAge || filters.type !== 'All animals') && (
+              <button
+                onClick={() => {
+                  handleTypeChange('All animals')
+                  handleFilterChange({ breed: null, minAge: null, maxAge: null })
+                }}
+                className="w-full text-sm text-[#f87171] hover:text-[#f5f5f0] py-2.5 border border-[#f87171]/30 hover:border-[#f87171]/60 rounded-lg transition-all"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Right Side - Results */}
+        <div className="col-span-3">
+          {currentSearch && status === 'succeeded' && (
+            <p className="text-sm text-[#8b95a1] mb-4">
+              {items.length > 0
+                ? `${items.length} result${items.length !== 1 ? 's' : ''} for "${currentSearch}"`
+                : `No results for "${currentSearch}"`}
+            </p>
+          )}
+
+          {status === 'loading' && <Spinner label="Loading listings" />}
+
+          {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
+
+          {status === 'succeeded' && items.length === 0 && (
+            <EmptyState
+              icon={PackageSearch}
+              title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
+              description="Try a different breed, type, or clear your filters."
+            />
+          )}
+
+          {status === 'succeeded' && items.length > 0 && (
+            <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+              {items.map((animal) => (
+                <AnimalCard key={animal.id} animal={animal} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Only: Results */}
+      <div className="sm:hidden">
+        {currentSearch && status === 'succeeded' && (
+          <p className="text-xs text-[#8b95a1] mb-3">
+            {items.length > 0
+              ? `${items.length} result${items.length !== 1 ? 's' : ''} for "${currentSearch}"`
+              : `No results for "${currentSearch}"`}
+          </p>
+        )}
+
+        {status === 'loading' && <Spinner label="Loading listings" />}
+
+        {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
+
+        {status === 'succeeded' && items.length === 0 && (
+          <EmptyState
+            icon={PackageSearch}
+            title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
+            description="Try a different breed, type, or clear your filters."
+          />
+        )}
+
+        {status === 'succeeded' && items.length > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            {items.map((animal) => (
+              <AnimalCard key={animal.id} animal={animal} />
+            ))}
+          </div>
+        )}
+      </div>
 
       <FilterDrawer
         open={drawerOpen}
