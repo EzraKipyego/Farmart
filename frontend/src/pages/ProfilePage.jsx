@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
-import { updateUserProfile, clearAuthError } from '../features/auth/authSlice'
+import { useNavigate } from 'react-router-dom'
+import { AlertCircle, CheckCircle2, Loader2, LogOut } from 'lucide-react'
+import { updateUserProfile, clearAuthError, logout } from '../features/auth/authSlice'
 import { kenyanCounties } from '../data/mockAnimals'
 
 function ProfilePage() {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { user, error } = useSelector((state) => state.auth)
 
   const [form, setForm] = useState({
@@ -16,6 +18,11 @@ function ProfilePage() {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  function handleLogout() {
+    dispatch(logout())
+    navigate('/login')
+  }
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
