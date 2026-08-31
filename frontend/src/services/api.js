@@ -2,6 +2,11 @@ import axios from 'axios'
 import { API_BASE_URL } from '../config/env'
 
 const baseURL = API_BASE_URL
+const publicAuthPaths = ['/auth/login', '/auth/register', '/auth/password-reset']
+
+function isPublicAuthRequest(url) {
+  return publicAuthPaths.some((path) => url?.startsWith(path))
+}
 
 export const api = axios.create({
   baseURL,
@@ -41,7 +46,7 @@ api.interceptors.response.use(
     const status = error.response?.status
     const url = error.config?.url
 
-    if (status === 401) {
+    if (status === 401 && !isPublicAuthRequest(url)) {
       console.warn(`[api] 401 unauthorized on ${url} — clearing session`)
       localStorage.removeItem('farmart_token')
       localStorage.removeItem('farmart_user')
