@@ -27,6 +27,22 @@ export const loginUser = createAsyncThunk('auth/login', async (payload, { reject
   }
 })
 
+export const requestPasswordReset = createAsyncThunk('auth/requestPasswordReset', async (payload, { rejectWithValue }) => {
+  try {
+    return await authService.requestPasswordReset(payload)
+  } catch (error) {
+    return rejectWithValue(error.message || 'Could not send password reset email')
+  }
+})
+
+export const confirmPasswordReset = createAsyncThunk('auth/confirmPasswordReset', async (payload, { rejectWithValue }) => {
+  try {
+    return await authService.confirmPasswordReset(payload)
+  } catch (error) {
+    return rejectWithValue(error.message || 'Could not reset password')
+  }
+})
+
 export const updateUserProfile = createAsyncThunk('auth/updateProfile', async (payload, { rejectWithValue }) => {
   try {
     return await authService.updateProfile(payload)
@@ -82,6 +98,28 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed'
         state.error = action.payload || 'Login failed'
+      })
+      .addCase(requestPasswordReset.pending, (state) => {
+        state.status = 'loading'
+        state.error = null
+      })
+      .addCase(requestPasswordReset.fulfilled, (state) => {
+        state.status = 'succeeded'
+      })
+      .addCase(requestPasswordReset.rejected, (state, action) => {
+        state.status = 'failed'
+        state.error = action.payload || 'Could not send password reset email'
+      })
+      .addCase(confirmPasswordReset.pending, (state) => {
+        state.status = 'loading'
+        state.error = null
+      })
+      .addCase(confirmPasswordReset.fulfilled, (state) => {
+        state.status = 'succeeded'
+      })
+      .addCase(confirmPasswordReset.rejected, (state, action) => {
+        state.status = 'failed'
+        state.error = action.payload || 'Could not reset password'
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload }
