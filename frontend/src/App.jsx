@@ -25,6 +25,7 @@ function App() {
           <Route path="/search" element={<BrowsePage />} />
           <Route path="/animals/:id" element={<AnimalDetailPage />} />
           <Route path="/login" element={<AuthPage />} />
+          <Route path="/reset-password" element={<AuthPage />} />
           <Route path="/cart" element={<CartPage />} />
 
           <Route
