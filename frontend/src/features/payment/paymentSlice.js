@@ -58,6 +58,15 @@ const paymentSlice = createSlice({
       state.status = null
       state.error = null
     },
+    restorePendingCheckout(state, action) {
+      const checkoutRequestId = action.payload?.checkoutRequestId
+      if (!checkoutRequestId) return
+
+      state.checkoutRequestId = checkoutRequestId
+      state.phase = 'pending'
+      state.status = 'PENDING'
+      state.error = null
+    },
     paymentTimedOut(state, action) {
       state.phase = 'failed'
       state.status = 'FAILED'
@@ -104,16 +113,16 @@ const paymentSlice = createSlice({
           return
         }
 
-        state.phase = 'failed'
-        state.error = action.payload?.message || 'Payment was not completed. Please try again.'
+        state.phase = 'pending'
+        state.error = null
       })
-      .addCase(pollPaymentStatus.rejected, (state, action) => {
-        state.phase = 'failed'
-        state.status = 'FAILED'
-        state.error = action.payload || 'Could not confirm payment status.'
+      .addCase(pollPaymentStatus.rejected, (state) => {
+        state.phase = 'pending'
+        state.status = 'PENDING'
+        state.error = null
       })
   },
 })
 
-export const { resetPayment, paymentTimedOut } = paymentSlice.actions
+export const { resetPayment, restorePendingCheckout, paymentTimedOut } = paymentSlice.actions
 export default paymentSlice.reducer

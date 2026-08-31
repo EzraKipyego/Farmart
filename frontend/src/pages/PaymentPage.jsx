@@ -2,9 +2,55 @@ import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Smartphone, Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
-import { startStkPush, pollPaymentStatus, resetPayment, paymentTimedOut } from '../features/payment/paymentSlice'
+import {
+  startStkPush,
+  pollPaymentStatus,
+  resetPayment,
+  restorePendingCheckout,
+  paymentTimedOut,
+} from '../features/payment/paymentSlice'
 import { clearCart } from '../features/cart/cartSlice'
 import { loadAnimals } from '../features/animals/animalsSlice'
+
+const POLL_INTERVAL_MS = 3000
+const PAYMENT_TIMEOUT_MS = 30000
+const PAYMENT_STORAGE_KEY = 'farmart_pending_checkout'
+
+function readPendingCheckout() {
+  try {
+    const raw = localStorage.getItem(PAYMENT_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch (error) {
+    console.error('[PaymentPage] could not read pending checkout state:', error)
+    return null
+  }
+}
+
+function writePendingCheckout(payload) {
+  try {
+    localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(payload))
+  } catch (error) {
+    console.error('[PaymentPage] could not persist pending checkout state:', error)
+  }
+}
+
+function clearPendingCheckout() {
+  try {
+    localStorage.removeItem(PAYMENT_STORAGE_KEY)
+  } catch (error) {
+    console.error('[PaymentPage] could not clear pending checkout state:', error)
+  }
+}
+
+function normalizePaymentStatus(value) {
+  const rawStatus = String(value ?? '').trim().toUpperCase()
+
+  if (['PENDING', 'PROCESSING', 'WAITING', 'INITIATED'].includes(rawStatus)) return 'PENDING'
+  if (['SUCCESS', 'SUCCESSFUL', 'COMPLETED', 'PAID'].includes(rawStatus)) return 'COMPLETED'
+  if (['FAILED', 'CANCELLED', 'CANCELED', 'TIMEOUT', 'TIMED_OUT', 'EXPIRED'].includes(rawStatus)) return 'FAILED'
+
+  return rawStatus || 'PENDING'
+}
 
 function PaymentPage() {
   const location = useLocation()
@@ -14,6 +60,7 @@ function PaymentPage() {
   const { filters } = useSelector((state) => state.animals)
   const pollingRef = useRef(null)
   const timeoutRef = useRef(null)
+  const pollStartedAtRef = useRef(0)
 
   const orderId = location.state?.orderId
   const productName = location.state?.productName
@@ -23,9 +70,30 @@ function PaymentPage() {
   const [phoneError, setPhoneError] = useState(null)
 
   useEffect(() => {
+    const saved = readPendingCheckout()
+    if (!saved?.checkoutRequestId) return
+
+    const elapsed = Date.now() - Number(saved.startedAt || 0)
+    if (elapsed >= PAYMENT_TIMEOUT_MS) {
+      clearPendingCheckout()
+      return
+    }
+
+    if (!checkoutRequestId) {
+      dispatch(
+        restorePendingCheckout({
+          checkoutRequestId: saved.checkoutRequestId,
+        }),
+      )
+      pollStartedAtRef.current = Number(saved.startedAt || Date.now())
+    }
+  }, [checkoutRequestId, dispatch])
+
+  useEffect(() => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      pollStartedAtRef.current = 0
       dispatch(resetPayment())
     }
   }, [dispatch])
@@ -37,15 +105,51 @@ function PaymentPage() {
       return
     }
 
-    const pollStatus = () => dispatch(pollPaymentStatus(checkoutRequestId))
+    if (!pollStartedAtRef.current) {
+      pollStartedAtRef.current = Date.now()
+    }
+
+    const pollStatus = async () => {
+      try {
+        const result = await dispatch(pollPaymentStatus(checkoutRequestId)).unwrap()
+        const normalizedStatus = normalizePaymentStatus(result?.status)
+
+        if (normalizedStatus === 'COMPLETED') return
+
+        if (normalizedStatus === 'FAILED') {
+          const elapsed = Date.now() - pollStartedAtRef.current
+          if (elapsed >= PAYMENT_TIMEOUT_MS) {
+            dispatch(
+              paymentTimedOut(
+                'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
+              ),
+            )
+          }
+        }
+      } catch (err) {
+        const elapsed = Date.now() - pollStartedAtRef.current
+        if (elapsed >= PAYMENT_TIMEOUT_MS) {
+          dispatch(
+            paymentTimedOut(
+              'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
+            ),
+          )
+        }
+      }
+    }
 
     pollStatus()
-    pollingRef.current = setInterval(pollStatus, 3000)
+    pollingRef.current = setInterval(pollStatus, POLL_INTERVAL_MS)
 
     timeoutRef.current = setTimeout(() => {
       if (pollingRef.current) clearInterval(pollingRef.current)
-      dispatch(paymentTimedOut('Payment timed out. Please check your M-Pesa prompt and try again.'))
-    }, 40000)
+      clearPendingCheckout()
+      dispatch(
+        paymentTimedOut(
+          'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
+        ),
+      )
+    }, PAYMENT_TIMEOUT_MS)
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
@@ -55,6 +159,7 @@ function PaymentPage() {
 
   useEffect(() => {
     if (phase === 'success') {
+      clearPendingCheckout()
       dispatch(clearCart())
       dispatch(loadAnimals(filters))
       const doneTimer = setTimeout(() => {
@@ -94,7 +199,18 @@ function PaymentPage() {
       const payload = { order_id: orderId, phone: normalizedPhone, amount: roundedAmount }
       console.log('Sending Payload:', payload)
 
-      await dispatch(startStkPush({ orderId, phone: normalizedPhone, amount: roundedAmount })).unwrap()
+      const result = await dispatch(startStkPush({ orderId, phone: normalizedPhone, amount: roundedAmount })).unwrap()
+      const requestId = result?.checkoutRequestId || result?.checkout_request_id
+
+      if (requestId) {
+        writePendingCheckout({
+          checkoutRequestId: requestId,
+          orderId,
+          productName,
+          amount: roundedAmount,
+          startedAt: Date.now(),
+        })
+      }
     } catch (err) {
       console.error('[PaymentPage] STK push failed:', err)
     }
@@ -105,11 +221,24 @@ function PaymentPage() {
   }
 
   function handleRetry() {
+    pollStartedAtRef.current = 0
+    clearPendingCheckout()
     dispatch(resetPayment())
+    setPhone('')
   }
 
   function handleCheckStatus() {
     if (checkoutRequestId) {
+      const elapsed = pollStartedAtRef.current ? Date.now() - pollStartedAtRef.current : 0
+      if (elapsed >= PAYMENT_TIMEOUT_MS) {
+        dispatch(
+          paymentTimedOut(
+            'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
+          ),
+        )
+        return
+      }
+
       dispatch(pollPaymentStatus(checkoutRequestId))
     }
   }
@@ -202,7 +331,9 @@ function PaymentPage() {
             <AlertCircle size={20} className="text-[#f87171]" aria-hidden="true" />
           </div>
           <p className="text-sm text-[#f5f5f0] mb-1">Payment failed</p>
-          <p className="text-xs text-[#8b95a1] mb-4">{error || 'The payment could not be completed.'}</p>
+          <p className="text-xs text-[#8b95a1] mb-4">
+            {error || 'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.'}
+          </p>
           <button
             onClick={handleRetry}
             className="w-full bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
