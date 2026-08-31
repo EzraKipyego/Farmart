@@ -7,6 +7,7 @@ import cartReducer, {
   removeFromCart,
 } from './features/cart/cartSlice'
 import animalsReducer, { setFilters, clearFilters } from './features/animals/animalsSlice'
+import paymentReducer from './features/payment/paymentSlice'
 import AnimalCard from './Components/animals/AnimalCard'
 
 const sampleAnimal = {
@@ -81,6 +82,35 @@ describe('animalsSlice', () => {
     const withFilters = animalsReducer(baseState, setFilters({ type: 'Goats', breed: 'Boer' }))
     const cleared = animalsReducer(withFilters, clearFilters())
     expect(cleared.filters).toEqual(baseState.filters)
+  })
+})
+
+describe('paymentSlice', () => {
+  it('normalizes backend payment status transitions for pending, success, and failure', () => {
+    let state = paymentReducer(undefined, {
+      type: 'payment/pollStatus/fulfilled',
+      payload: { status: 'PENDING' },
+    })
+
+    expect(state.status).toBe('PENDING')
+    expect(state.phase).toBe('pending')
+
+    state = paymentReducer(state, {
+      type: 'payment/pollStatus/fulfilled',
+      payload: { status: 'COMPLETED' },
+    })
+
+    expect(state.status).toBe('COMPLETED')
+    expect(state.phase).toBe('success')
+
+    state = paymentReducer(state, {
+      type: 'payment/pollStatus/fulfilled',
+      payload: { status: 'FAILED', message: 'Payment timed out' },
+    })
+
+    expect(state.status).toBe('FAILED')
+    expect(state.phase).toBe('failed')
+    expect(state.error).toBe('Payment timed out')
   })
 })
 

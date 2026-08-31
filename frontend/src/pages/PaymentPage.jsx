@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Smartphone, Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
-import { startStkPush, pollPaymentStatus, resetPayment } from '../features/payment/paymentSlice'
+import { startStkPush, pollPaymentStatus, resetPayment, paymentTimedOut } from '../features/payment/paymentSlice'
 import { clearCart } from '../features/cart/cartSlice'
+import { loadAnimals } from '../features/animals/animalsSlice'
 
 function PaymentPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { phase, checkoutRequestId, error } = useSelector((state) => state.payment)
+  const { phase, status, checkoutRequestId, error } = useSelector((state) => state.payment)
+  const { filters } = useSelector((state) => state.animals)
+  const pollingRef = useRef(null)
+  const timeoutRef = useRef(null)
 
   const orderId = location.state?.orderId
   const productName = location.state?.productName
@@ -20,24 +24,45 @@ function PaymentPage() {
 
   useEffect(() => {
     return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
       dispatch(resetPayment())
     }
   }, [dispatch])
 
   useEffect(() => {
-    if (phase === 'pending' && checkoutRequestId) {
-      const timer = setTimeout(() => {
-        dispatch(pollPaymentStatus(checkoutRequestId))
-      }, 3000)
-      return () => clearTimeout(timer)
+    if (phase !== 'pending' || !checkoutRequestId) {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      return
+    }
+
+    const pollStatus = () => dispatch(pollPaymentStatus(checkoutRequestId))
+
+    pollStatus()
+    pollingRef.current = setInterval(pollStatus, 3000)
+
+    timeoutRef.current = setTimeout(() => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+      dispatch(paymentTimedOut('Payment timed out. Please check your M-Pesa prompt and try again.'))
+    }, 40000)
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
   }, [phase, checkoutRequestId, dispatch])
 
   useEffect(() => {
     if (phase === 'success') {
       dispatch(clearCart())
+      dispatch(loadAnimals(filters))
+      const doneTimer = setTimeout(() => {
+        navigate('/orders', { replace: true })
+      }, 1200)
+      return () => clearTimeout(doneTimer)
     }
-  }, [phase, dispatch])
+  }, [phase, dispatch, navigate, filters])
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return <Navigate to="/" replace />
@@ -89,6 +114,8 @@ function PaymentPage() {
     }
   }
 
+  const isCheckingPayment = status === 'PENDING' || phase === 'pending'
+
   return (
     <div className="px-4 sm:px-6 pt-4 pb-10 max-w-sm mx-auto">
       <h1 className="text-base font-medium text-[#f5f5f0] mb-5">Payment</h1>
@@ -131,19 +158,24 @@ function PaymentPage() {
         </form>
       )}
 
-      {phase === 'pending' && (
+      {isCheckingPayment && (
         <div className="bg-[#161b22] border border-[#1f2937] rounded-lg p-6 text-center">
           <div className="w-11 h-11 rounded-full bg-[#facc15]/10 flex items-center justify-center mx-auto mb-3">
-            <Clock size={20} className="text-[#facc15]" aria-hidden="true" />
+            {phase === 'pending' ? (
+              <Loader2 size={20} className="text-[#facc15] animate-spin" aria-hidden="true" />
+            ) : (
+              <Clock size={20} className="text-[#facc15]" aria-hidden="true" />
+            )}
           </div>
-          <p className="text-sm text-[#f5f5f0] mb-1">Check your phone</p>
-          <p className="text-xs text-[#8b95a1] mb-4">Enter your M-Pesa PIN on the prompt, then confirm below.</p>
+          <p className="text-sm text-[#f5f5f0] mb-1">Checking your payment</p>
+          <p className="text-xs text-[#8b95a1] mb-4">We are confirming your M-Pesa payment. This usually takes a few seconds.</p>
           <button
             type="button"
             onClick={handleCheckStatus}
-            className="w-full border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+            className="w-full border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] disabled:opacity-60"
+            disabled={phase === 'pending'}
           >
-            I have completed payment
+            {phase === 'pending' ? 'Checking payment…' : 'I have completed payment'}
           </button>
         </div>
       )}
