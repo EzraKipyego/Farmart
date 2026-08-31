@@ -3,12 +3,20 @@ import api, { normalizeApiError } from './api'
 const TOKEN_KEY = 'farmart_token'
 const USER_KEY = 'farmart_user'
 
+function authErrorMessage(error, fallback) {
+  const normalized = normalizeApiError(error)
+  if (normalized.status === 401) {
+    return { ...normalized, message: 'Incorrect email, password, or account type.' }
+  }
+  return { ...normalized, message: normalized.message || fallback }
+}
+
 export async function register(payload) {
   try {
     const response = await api.post('/auth/register', payload)
     return response.data
   } catch (error) {
-    const normalized = normalizeApiError(error)
+    const normalized = authErrorMessage(error, 'Registration failed')
     console.error('[authService] register failed:', normalized)
     throw normalized
   }
@@ -19,8 +27,30 @@ export async function login(payload) {
     const response = await api.post('/auth/login', payload)
     return response.data
   } catch (error) {
-    const normalized = normalizeApiError(error)
+    const normalized = authErrorMessage(error, 'Login failed')
     console.error('[authService] login failed:', normalized)
+    throw normalized
+  }
+}
+
+export async function requestPasswordReset(payload) {
+  try {
+    const response = await api.post('/auth/password-reset', payload)
+    return response.data
+  } catch (error) {
+    const normalized = normalizeApiError(error)
+    console.error('[authService] password reset request failed:', normalized)
+    throw normalized
+  }
+}
+
+export async function confirmPasswordReset(payload) {
+  try {
+    const response = await api.post('/auth/password-reset/confirm', payload)
+    return response.data
+  } catch (error) {
+    const normalized = normalizeApiError(error)
+    console.error('[authService] password reset confirmation failed:', normalized)
     throw normalized
   }
 }
