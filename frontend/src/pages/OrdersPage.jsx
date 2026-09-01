@@ -6,12 +6,7 @@ import { loadBuyerOrders } from '../features/orders/ordersSlice'
 import Spinner from '../components/common/Spinner'
 import ErrorState from '../components/common/ErrorState'
 import EmptyState from '../components/common/EmptyState'
-
-const statusStyles = {
-  pending: 'bg-[#facc15]/10 text-[#facc15]',
-  confirmed: 'bg-[#2dd4a7]/10 text-[#2dd4a7]',
-  rejected: 'bg-[#f87171]/10 text-[#f87171]',
-}
+import { mapBuyerOrderStatus, getBuyerStatusLabel, getStatusStyles } from '../utils/statusMapper'
 
 function OrdersPage() {
   const dispatch = useDispatch()
@@ -44,28 +39,45 @@ function OrdersPage() {
 
       {status === 'succeeded' && buyerOrders.length > 0 && (
         <div className="flex flex-col gap-3">
-          {buyerOrders.map((order) => (
-            <div key={order.id} className="bg-[#161b22] border border-[#1f2937] rounded-lg p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <p className="text-sm text-[#f5f5f0]">Order: {order.items?.[0]?.title || order.id}</p>
-                  <p className="text-[10px] text-[#5f6b7a]">Reference #{order.id}</p>
+          {buyerOrders.map((order) => {
+            const mappedStatus = mapBuyerOrderStatus(order.status)
+            return (
+              <div key={order.id} className="bg-[#161b22] border border-[#1f2937] rounded-lg p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-sm text-[#f5f5f0]">Order: {order.items?.[0]?.title || order.id}</p>
+                    <p className="text-[10px] text-[#5f6b7a]">Reference #{order.id}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-1 rounded-md ${getStatusStyles(mappedStatus)}`}>
+                    {getBuyerStatusLabel(order.status)}
+                  </span>
                 </div>
-                <span className={`text-[10px] px-2 py-1 rounded-md capitalize ${statusStyles[order.status] || 'bg-[#1c2129] text-[#8b95a1]'}`}>
-                  {order.status}
-                </span>
+
+                {order.items.map((item) => (
+                  <div key={item.animalId || item.id || `${order.id}-${item.title}`} className="py-2 border-t border-[#1f2937] first:border-t-0">
+                    {item.image && <img src={item.image} alt={item.title || 'Order item'} className="w-full h-32 object-cover rounded mb-2" />}
+                    <p className="text-sm text-[#f5f5f0] font-medium">{item.title}</p>
+                    {item.description && <p className="text-xs text-[#8b95a1] mt-0.5">{item.description}</p>}
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-[#8b95a1]">Qty: {item.quantity}</span>
+                      <span className="text-sm text-[#f5f5f0] font-medium">KSh {Math.round(item.price).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-[#1f2937]">
+                      <span className="text-[10px] text-[#8b95a1]">Status</span>
+                      <span className={`text-[10px] px-2 py-1 rounded-md ${getStatusStyles(mapBuyerOrderStatus(item.status || order.status))}`}>
+                        {getBuyerStatusLabel(item.status || order.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-[#1f2937]">
+                  <p className="text-[11px] text-[#8b95a1]">Seller: {order.farmerName}</p>
+                  <p className="text-sm text-[#f5f5f0] font-medium">KSh {Math.round(order.total).toLocaleString()}</p>
+                </div>
               </div>
-              {order.items.map((item) => (
-                <p key={item.animalId} className="text-xs text-[#8b95a1] mb-0.5">
-                  {item.title} · qty {item.quantity} · KSh {Math.round(item.price).toLocaleString()}
-                </p>
-              ))}
-              <div className="flex justify-between items-center mt-3 pt-3 border-t border-[#1f2937]">
-                <p className="text-[11px] text-[#8b95a1]">Seller: {order.farmerName}</p>
-                <p className="text-sm text-[#f5f5f0] font-medium">KSh {Math.round(order.total).toLocaleString()}</p>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

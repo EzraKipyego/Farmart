@@ -12,8 +12,8 @@ import {
 import { clearCart } from '../features/cart/cartSlice'
 import { loadAnimals } from '../features/animals/animalsSlice'
 
-const POLL_INTERVAL_MS = 3000
-const PAYMENT_TIMEOUT_MS = 45000
+const POLL_INTERVAL_MS = 5000
+const PAYMENT_TIMEOUT_MS = 40000
 const PAYMENT_STORAGE_KEY = 'farmart_pending_checkout'
 
 function readPendingCheckout() {
@@ -121,6 +121,15 @@ function PaymentPage() {
           }
         }
       } catch (err) {
+        const statusCode = Number(err?.status)
+        const message = String(err?.message || '')
+        const isTemporaryNetworkFailure =
+          statusCode === 502 || statusCode === 504 || /502|504|Bad Gateway|Gateway Timeout|timeout/i.test(message)
+
+        if (isTemporaryNetworkFailure) {
+          return
+        }
+
         const elapsed = Date.now() - pollStartedAtRef.current
         if (elapsed >= PAYMENT_TIMEOUT_MS) {
           dispatch(

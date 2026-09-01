@@ -73,7 +73,13 @@ const ordersSlice = createSlice({
       })
       .addCase(loadBuyerOrders.fulfilled, (state, action) => {
         state.status = 'succeeded'
-        state.buyerOrders = action.payload
+        state.buyerOrders = Array.isArray(action.payload)
+          ? action.payload
+          : Array.isArray(action.payload?.orders)
+            ? action.payload.orders
+            : Array.isArray(action.payload?.data)
+              ? action.payload.data
+              : []
       })
       .addCase(loadBuyerOrders.rejected, (state, action) => {
         state.status = 'failed'
@@ -84,15 +90,28 @@ const ordersSlice = createSlice({
       })
       .addCase(loadFarmerOrders.fulfilled, (state, action) => {
         state.farmerOrdersStatus = 'succeeded'
-        state.farmerOrders = action.payload
+        state.farmerOrders = Array.isArray(action.payload)
+          ? action.payload
+          : Array.isArray(action.payload?.orders)
+            ? action.payload.orders
+            : Array.isArray(action.payload?.data)
+              ? action.payload.data
+              : []
       })
       .addCase(loadFarmerOrders.rejected, (state, action) => {
         state.farmerOrdersStatus = 'failed'
         state.error = action.payload
       })
       .addCase(respondToOrder.fulfilled, (state, action) => {
-        const order = state.farmerOrders.find((o) => o.id === action.payload.id)
-        if (order) order.status = action.payload.status
+        const updatedOrder = action.payload?.order || action.payload
+        const orderId = updatedOrder?.id || action.payload?.orderId || action.payload?.order_id
+
+        if (!orderId) return
+
+        const order = state.farmerOrders.find((o) => o.id === orderId)
+        if (order) {
+          order.status = updatedOrder.status || order.status
+        }
       })
       .addCase(respondToOrder.rejected, (state, action) => {
         state.error = action.payload
