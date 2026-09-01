@@ -89,7 +89,8 @@ const animalsSlice = createSlice({
       })
       .addCase(loadAnimals.fulfilled, (state, action) => {
         state.status = 'succeeded'
-        state.items = action.payload
+        const payload = Array.isArray(action.payload) ? action.payload : []
+        state.items = payload.filter((animal) => animal?.available === true)
       })
       .addCase(loadAnimals.rejected, (state, action) => {
         state.status = 'failed'

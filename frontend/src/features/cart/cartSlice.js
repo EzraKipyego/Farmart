@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit'
 function loadCartFromStorage() {
   try {
     const raw = localStorage.getItem('farmart_cart')
-    return raw ? JSON.parse(raw) : []
+    const items = raw ? JSON.parse(raw) : []
+    return Array.isArray(items) ? items.filter((item) => item?.available !== false) : []
   } catch (error) {
     console.error('[cartSlice] failed to parse stored cart, resetting it:', error)
     return []
@@ -28,6 +29,12 @@ const cartSlice = createSlice({
   reducers: {
     addToCart(state, action) {
       const animal = action.payload
+      if (animal?.available === false) {
+        state.items = state.items.filter((item) => item.animalId !== animal.id)
+        persistCart(state.items)
+        return
+      }
+
       const existing = state.items.find((item) => item.animalId === animal.id)
       if (existing) {
         existing.quantity += 1
@@ -41,6 +48,7 @@ const cartSlice = createSlice({
           location: animal.location,
           farmerId: animal.farmerId,
           image: animal.image || '',
+          available: animal.available,
           quantity: 1,
         })
       }

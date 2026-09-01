@@ -8,6 +8,7 @@ import cartReducer, {
 } from './features/cart/cartSlice'
 import animalsReducer, { setFilters, clearFilters } from './features/animals/animalsSlice'
 import paymentReducer from './features/payment/paymentSlice'
+import ordersReducer from './features/orders/ordersSlice'
 import AnimalCard from './Components/animals/AnimalCard'
 
 const sampleAnimal = {
@@ -82,6 +83,34 @@ describe('animalsSlice', () => {
     const withFilters = animalsReducer(baseState, setFilters({ type: 'Goats', breed: 'Boer' }))
     const cleared = animalsReducer(withFilters, clearFilters())
     expect(cleared.filters).toEqual(baseState.filters)
+  })
+
+  it('filters out unavailable animals from the catalog', () => {
+    const state = animalsReducer(baseState, {
+      type: 'animals/load/fulfilled',
+      payload: [
+        { id: 'a1', available: true, title: 'Available cow' },
+        { id: 'a2', available: false, title: 'Sold cow' },
+        { id: 'a3', available: undefined, title: 'Unclear stock' },
+      ],
+    })
+
+    expect(state.items).toHaveLength(1)
+    expect(state.items[0].id).toBe('a1')
+  })
+})
+
+describe('ordersSlice', () => {
+  it('uses a clean user message for already-purchased animals', () => {
+    const state = ordersReducer(undefined, {
+      type: 'orders/checkout/rejected',
+      payload: {
+        message: 'This animal has already been purchased.',
+        code: 'ANIMAL_ALREADY_PURCHASED',
+      },
+    })
+
+    expect(state.error).toBe('This animal has already been purchased.')
   })
 })
 

@@ -15,6 +15,7 @@ function BrowsePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { items, filters, status, error } = useSelector((state) => state.animals)
+  const availableItems = items.filter((animal) => animal?.available === true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [expandedFilters, setExpandedFilters] = useState({
     type: true,
@@ -237,8 +238,8 @@ function BrowsePage() {
         <div className="col-span-3">
           {currentSearch && status === 'succeeded' && (
             <p className="text-sm text-[#8b95a1] mb-4">
-              {items.length > 0
-                ? `${items.length} result${items.length !== 1 ? 's' : ''} for "${currentSearch}"`
+              {availableItems.length > 0
+                ? `${availableItems.length} result${availableItems.length !== 1 ? 's' : ''} for "${currentSearch}"`
                 : `No results for "${currentSearch}"`}
             </p>
           )}
@@ -247,7 +248,7 @@ function BrowsePage() {
 
           {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
 
-          {status === 'succeeded' && items.length === 0 && (
+          {status === 'succeeded' && availableItems.length === 0 && (
             <EmptyState
               icon={PackageSearch}
               title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
@@ -255,9 +256,9 @@ function BrowsePage() {
             />
           )}
 
-          {status === 'succeeded' && items.length > 0 && (
+          {status === 'succeeded' && availableItems.length > 0 && (
             <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-              {items.map((animal) => (
+              {availableItems.map((animal) => (
                 <AnimalCard key={animal.id} animal={animal} />
               ))}
             </div>
@@ -269,8 +270,8 @@ function BrowsePage() {
       <div className="sm:hidden">
         {currentSearch && status === 'succeeded' && (
           <p className="text-xs text-[#8b95a1] mb-3">
-            {items.length > 0
-              ? `${items.length} result${items.length !== 1 ? 's' : ''} for "${currentSearch}"`
+            {availableItems.length > 0
+              ? `${availableItems.length} result${availableItems.length !== 1 ? 's' : ''} for "${currentSearch}"`
               : `No results for "${currentSearch}"`}
           </p>
         )}
@@ -279,7 +280,7 @@ function BrowsePage() {
 
         {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
 
-        {status === 'succeeded' && items.length === 0 && (
+        {status === 'succeeded' && availableItems.length === 0 && (
           <EmptyState
             icon={PackageSearch}
             title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
@@ -287,9 +288,9 @@ function BrowsePage() {
           />
         )}
 
-        {status === 'succeeded' && items.length > 0 && (
+        {status === 'succeeded' && availableItems.length > 0 && (
           <div className="grid grid-cols-2 gap-3">
-            {items.map((animal) => (
+            {availableItems.map((animal) => (
               <AnimalCard key={animal.id} animal={animal} />
             ))}
           </div>

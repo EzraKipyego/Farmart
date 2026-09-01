@@ -71,7 +71,20 @@ function CheckoutPage() {
         },
       })
     } catch (err) {
-      console.error('[CheckoutPage] checkout failed:', err)
+      const code = err?.code || err?.details?.code
+      const message = err?.message || err?.details?.message
+
+      if (code === 'ANIMAL_ALREADY_PURCHASED') {
+        setFormError('This animal has already been purchased.')
+        return
+      }
+
+      if (message && message !== 'Request failed with status code 409') {
+        setFormError(message)
+        return
+      }
+
+      setFormError('This animal has already been purchased.')
     }
   }
 

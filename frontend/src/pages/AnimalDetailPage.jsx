@@ -20,8 +20,10 @@ function AnimalDetailPage() {
     dispatch(loadAnimalDetail(id))
   }, [dispatch, id])
 
+  const isSoldOut = Boolean(animal && animal.available === false)
+
   function handleAddToCart() {
-    if (!animal) return
+    if (!animal || isSoldOut) return
     for (let i = 0; i < quantity; i += 1) {
       dispatch(addToCart(animal))
     }
@@ -30,7 +32,7 @@ function AnimalDetailPage() {
   }
 
   function handleBuyNow() {
-    if (!animal) return
+    if (!animal || isSoldOut) return
     dispatch(addToCart(animal))
     navigate('/cart')
   }
@@ -114,60 +116,70 @@ function AnimalDetailPage() {
           <p className="text-[11px] text-[#8b95a1] mb-1">Price</p>
           <p className="text-2xl font-medium text-[#f5f5f0] mb-4">KSh {Math.round(animal.price).toLocaleString()}</p>
 
-          <div className="flex items-center gap-3 mb-5">
-            <span className="text-xs text-[#8b95a1]">Quantity</span>
-            <div className="flex items-center gap-3 bg-[#161b22] border border-[#1f2937] rounded-lg px-2 py-1">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                aria-label="Decrease quantity"
-                className="w-7 h-7 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] rounded-md"
-              >
-                <Minus size={14} aria-hidden="true" />
-              </button>
-              <span className="text-sm text-[#f5f5f0] w-4 text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                aria-label="Increase quantity"
-                className="w-7 h-7 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] rounded-md"
-              >
-                <Plus size={14} aria-hidden="true" />
-              </button>
+          {isSoldOut ? (
+            <div className="bg-[#f87171]/10 border border-[#f87171]/40 text-[#f87171] rounded-lg px-3 py-2.5 text-sm mb-5">
+              This animal has already been purchased.
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-xs text-[#8b95a1]">Quantity</span>
+              <div className="flex items-center gap-3 bg-[#161b22] border border-[#1f2937] rounded-lg px-2 py-1">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="Decrease quantity"
+                  className="w-7 h-7 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] rounded-md"
+                >
+                  <Minus size={14} aria-hidden="true" />
+                </button>
+                <span className="text-sm text-[#f5f5f0] w-4 text-center">{quantity}</span>
+                <button
+                  onClick={() => setQuantity((q) => q + 1)}
+                  aria-label="Increase quantity"
+                  className="w-7 h-7 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117] rounded-md"
+                >
+                  <Plus size={14} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {addedMessage && <p className="text-xs text-[#2dd4a7] mb-3">Added to cart.</p>}
 
-          <div className="hidden sm:flex gap-3">
-            <button
-              onClick={handleBuyNow}
-              className="flex-1 bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
-            >
-              Buy now
-            </button>
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-3 rounded-lg hover:bg-[#161b22] outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
-            >
-              Add to cart
-            </button>
-          </div>
+          {!isSoldOut && (
+            <div className="hidden sm:flex gap-3">
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+              >
+                Buy now
+              </button>
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-3 rounded-lg hover:bg-[#161b22] outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+              >
+                Add to cart
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-[#0d1117] border-t border-[#1f2937] p-3 flex gap-3 z-40">
-        <button
-          onClick={handleBuyNow}
-          className="flex-1 bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
-        >
-          Buy now
-        </button>
-        <button
-          onClick={handleAddToCart}
-          className="flex-1 border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
-        >
-          Add to cart
-        </button>
-      </div>
+      {!isSoldOut && (
+        <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-[#0d1117] border-t border-[#1f2937] p-3 flex gap-3 z-40">
+          <button
+            onClick={handleBuyNow}
+            className="flex-1 bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+          >
+            Buy now
+          </button>
+          <button
+            onClick={handleAddToCart}
+            className="flex-1 border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+          >
+            Add to cart
+          </button>
+        </div>
+      )}
     </div>
   )
 }

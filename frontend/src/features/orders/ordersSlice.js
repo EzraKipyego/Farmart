@@ -66,7 +66,16 @@ const ordersSlice = createSlice({
       })
       .addCase(submitCheckout.rejected, (state, action) => {
         state.checkoutStatus = 'failed'
-        state.error = action.payload
+        const payload = action.payload || {}
+        const code = payload.code || payload?.details?.code
+        const message = payload.message || payload?.details?.message || 'Could not complete checkout'
+
+        if (code === 'ANIMAL_ALREADY_PURCHASED') {
+          state.error = 'This animal has already been purchased.'
+          return
+        }
+
+        state.error = message
       })
       .addCase(loadBuyerOrders.pending, (state) => {
         state.status = 'loading'
