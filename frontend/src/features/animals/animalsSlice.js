@@ -30,7 +30,7 @@ export const loadAnimalDetail = createAsyncThunk('animals/loadDetail', async (id
   try {
     return await animalService.fetchAnimalById(id)
   } catch (error) {
-    return rejectWithValue(error.message || 'Could not load this listing')
+    return rejectWithValue(error)
   }
 })
 
@@ -54,7 +54,7 @@ export const editAnimal = createAsyncThunk('animals/edit', async ({ id, payload 
   try {
     return await animalService.updateAnimal(id, payload)
   } catch (error) {
-    return rejectWithValue(error.message || 'Could not update this listing')
+    return rejectWithValue(error)
   }
 })
 
