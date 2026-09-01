@@ -113,6 +113,12 @@ const paymentSlice = createSlice({
           return
         }
 
+        if (state.checkoutRequestId && state.phase === 'failed') {
+          state.phase = 'failed'
+          state.error = state.error || 'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.'
+          return
+        }
+
         state.phase = 'pending'
         state.error = null
       })

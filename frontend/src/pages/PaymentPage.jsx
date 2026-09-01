@@ -13,7 +13,7 @@ import { clearCart } from '../features/cart/cartSlice'
 import { loadAnimals } from '../features/animals/animalsSlice'
 
 const POLL_INTERVAL_MS = 3000
-const PAYMENT_TIMEOUT_MS = 30000
+const PAYMENT_TIMEOUT_MS = 45000
 const PAYMENT_STORAGE_KEY = 'farmart_pending_checkout'
 
 function readPendingCheckout() {
@@ -72,12 +72,6 @@ function PaymentPage() {
   useEffect(() => {
     const saved = readPendingCheckout()
     if (!saved?.checkoutRequestId) return
-
-    const elapsed = Date.now() - Number(saved.startedAt || 0)
-    if (elapsed >= PAYMENT_TIMEOUT_MS) {
-      clearPendingCheckout()
-      return
-    }
 
     if (!checkoutRequestId) {
       dispatch(
@@ -143,7 +137,6 @@ function PaymentPage() {
 
     timeoutRef.current = setTimeout(() => {
       if (pollingRef.current) clearInterval(pollingRef.current)
-      clearPendingCheckout()
       dispatch(
         paymentTimedOut(
           'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
@@ -228,19 +221,9 @@ function PaymentPage() {
   }
 
   function handleCheckStatus() {
-    if (checkoutRequestId) {
-      const elapsed = pollStartedAtRef.current ? Date.now() - pollStartedAtRef.current : 0
-      if (elapsed >= PAYMENT_TIMEOUT_MS) {
-        dispatch(
-          paymentTimedOut(
-            'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
-          ),
-        )
-        return
-      }
+    if (!checkoutRequestId) return
 
-      dispatch(pollPaymentStatus(checkoutRequestId))
-    }
+    dispatch(pollPaymentStatus(checkoutRequestId))
   }
 
   const isCheckingPayment = status === 'PENDING' || phase === 'pending'
@@ -334,6 +317,13 @@ function PaymentPage() {
           <p className="text-xs text-[#8b95a1] mb-4">
             {error || 'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.'}
           </p>
+          <button
+            type="button"
+            onClick={handleCheckStatus}
+            className="w-full border border-[#1f2937] text-[#f5f5f0] font-medium text-sm py-2.5 rounded-lg mb-3 outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+          >
+            Re-check Payment Status
+          </button>
           <button
             onClick={handleRetry}
             className="w-full bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"

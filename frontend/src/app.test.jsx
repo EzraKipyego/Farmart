@@ -86,8 +86,16 @@ describe('animalsSlice', () => {
 })
 
 describe('paymentSlice', () => {
-  it('normalizes backend payment status transitions for pending, success, and failure', () => {
+  it('keeps failed poll responses in a pending grace window instead of failing immediately', () => {
     let state = paymentReducer(undefined, {
+      type: 'payment/startStkPush/fulfilled',
+      payload: { checkoutRequestId: 'ws_CO_123' },
+    })
+
+    expect(state.phase).toBe('pending')
+    expect(state.status).toBe('PENDING')
+
+    state = paymentReducer(state, {
       type: 'payment/pollStatus/fulfilled',
       payload: { status: 'PENDING' },
     })
@@ -109,8 +117,28 @@ describe('paymentSlice', () => {
     })
 
     expect(state.status).toBe('FAILED')
+    expect(state.phase).toBe('pending')
+    expect(state.error).toBeNull()
+  })
+
+  it('preserves the checkoutRequestId when the payment is timed out for a manual re-check', () => {
+    const state = paymentReducer(
+      {
+        checkoutRequestId: 'ws_CO_123',
+        phase: 'pending',
+        status: 'PENDING',
+        error: null,
+      },
+      {
+        type: 'payment/paymentTimedOut',
+        payload: 'Payment unconfirmed or canceled. If money was deducted, please wait a moment or contact support.',
+      },
+    )
+
+    expect(state.checkoutRequestId).toBe('ws_CO_123')
     expect(state.phase).toBe('failed')
-    expect(state.error).toBe('Payment timed out')
+    expect(state.status).toBe('FAILED')
+    expect(state.error).toContain('Payment unconfirmed or canceled')
   })
 })
 
