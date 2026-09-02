@@ -31,7 +31,7 @@ export async function fetchAnimalById(id) {
 
 export async function createAnimal(payload) {
   try {
-    const response = await api.post('/animals/', payload)
+    const response = await api.post('/animals', payload)
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
