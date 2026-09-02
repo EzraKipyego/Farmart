@@ -48,7 +48,7 @@ function MobileTabBar() {
         <Home size={20} aria-hidden="true" />
         Browse
       </NavLink>
-      <NavLink to="/search" className={tabClass}>
+      <NavLink to="/search" end className={tabClass}>
         <Search size={20} aria-hidden="true" />
         Search
       </NavLink>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal, PackageSearch, ChevronDown } from 'lucide-react'
 import { loadAnimals, setFilters } from '../features/animals/animalsSlice'
 import { animalTypes, breedsByType, ageRanges } from '../data/mockAnimals'
@@ -12,8 +12,7 @@ import EmptyState from '../components/common/EmptyState'
 
 function BrowsePage() {
   const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { items, filters, status, error } = useSelector((state) => state.animals)
   const availableItems = items.filter((animal) => animal?.available === true)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -23,11 +22,28 @@ function BrowsePage() {
     age: false,
   })
   const searchInputRef = useRef(null)
-  const currentSearch = searchParams.get('search') || ''
+  const currentSearch = searchParams.get('q') || searchParams.get('search') || ''
+  const [searchInput, setSearchInput] = useState(currentSearch)
 
   useEffect(() => {
-    dispatch(setFilters({ search: currentSearch }))
-  }, [dispatch, currentSearch])
+    setSearchInput(currentSearch)
+  }, [currentSearch])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const trimmed = searchInput.trim()
+      dispatch(setFilters({ search: trimmed }))
+      setSearchParams((previous) => {
+        const next = new URLSearchParams(previous)
+        if (trimmed) next.set('q', trimmed)
+        else next.delete('q')
+        next.delete('search')
+        return next
+      }, { replace: true })
+    }, 300)
+
+    return () => window.clearTimeout(timer)
+  }, [dispatch, searchInput, setSearchParams])
 
   function toggleFilterSection(section) {
     setExpandedFilters((prev) => ({
@@ -40,11 +56,11 @@ function BrowsePage() {
     dispatch(loadAnimals(filters))
   }, [dispatch, filters])
 
-  function handleSearchSubmit(e) {
-    e.preventDefault()
-    const trimmed = (searchInputRef.current?.value || '').trim()
-    navigate(trimmed ? `/?search=${encodeURIComponent(trimmed)}` : '/')
-  }
+  const normalizedSearch = searchInput.trim().toLowerCase()
+  const displayedItems = normalizedSearch
+    ? availableItems.filter((animal) => [animal.title, animal.type, animal.breed, animal.description]
+      .some((value) => String(value || '').toLowerCase().includes(normalizedSearch)))
+    : availableItems
 
   function handleTypeChange(type) {
     dispatch(setFilters({ type, breed: null }))
@@ -63,14 +79,14 @@ function BrowsePage() {
   return (
     <div className="px-4 sm:px-6 pt-4 pb-24 sm:pb-10 max-w-7xl mx-auto">
       {/* Mobile: Search + Filter Drawer */}
-      <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 mb-4 sm:hidden">
+      <div className="flex items-center gap-2 mb-4 sm:hidden">
         <div className="flex-1 flex items-center gap-2 bg-[#161b22] border border-[#1f2937] rounded-lg px-3 py-2">
           <Search size={15} className="text-[#5f6b7a]" aria-hidden="true" />
           <input
-            key={currentSearch}
             ref={searchInputRef}
             type="text"
-            defaultValue={currentSearch}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search"
             className="bg-transparent flex-1 text-sm text-[#f5f5f0] placeholder:text-[#5f6b7a] outline-none"
           />
@@ -88,7 +104,7 @@ function BrowsePage() {
             </span>
           )}
         </button>
-      </form>
+      </div>
 
       {/* Mobile: Type Filter */}
       <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:hidden">
@@ -238,8 +254,8 @@ function BrowsePage() {
         <div className="col-span-3">
           {currentSearch && status === 'succeeded' && (
             <p className="text-sm text-[#8b95a1] mb-4">
-              {availableItems.length > 0
-                ? `${availableItems.length} result${availableItems.length !== 1 ? 's' : ''} for "${currentSearch}"`
+              {displayedItems.length > 0
+                ? `${displayedItems.length} result${displayedItems.length !== 1 ? 's' : ''} for "${currentSearch}"`
                 : `No results for "${currentSearch}"`}
             </p>
           )}
@@ -248,7 +264,7 @@ function BrowsePage() {
 
           {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
 
-          {status === 'succeeded' && availableItems.length === 0 && (
+          {status === 'succeeded' && displayedItems.length === 0 && (
             <EmptyState
               icon={PackageSearch}
               title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
@@ -256,9 +272,9 @@ function BrowsePage() {
             />
           )}
 
-          {status === 'succeeded' && availableItems.length > 0 && (
+          {status === 'succeeded' && displayedItems.length > 0 && (
             <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-              {availableItems.map((animal) => (
+              {displayedItems.map((animal) => (
                 <AnimalCard key={animal.id} animal={animal} />
               ))}
             </div>
@@ -270,8 +286,8 @@ function BrowsePage() {
       <div className="sm:hidden">
         {currentSearch && status === 'succeeded' && (
           <p className="text-xs text-[#8b95a1] mb-3">
-            {availableItems.length > 0
-              ? `${availableItems.length} result${availableItems.length !== 1 ? 's' : ''} for "${currentSearch}"`
+            {displayedItems.length > 0
+              ? `${displayedItems.length} result${displayedItems.length !== 1 ? 's' : ''} for "${currentSearch}"`
               : `No results for "${currentSearch}"`}
           </p>
         )}
@@ -280,7 +296,7 @@ function BrowsePage() {
 
         {status === 'failed' && <ErrorState message={error} onRetry={handleRetry} />}
 
-        {status === 'succeeded' && availableItems.length === 0 && (
+        {status === 'succeeded' && displayedItems.length === 0 && (
           <EmptyState
             icon={PackageSearch}
             title={currentSearch ? `No animals matched "${currentSearch}"` : 'No animals match your filters'}
@@ -288,9 +304,9 @@ function BrowsePage() {
           />
         )}
 
-        {status === 'succeeded' && availableItems.length > 0 && (
+        {status === 'succeeded' && displayedItems.length > 0 && (
           <div className="grid grid-cols-2 gap-3">
-            {availableItems.map((animal) => (
+            {displayedItems.map((animal) => (
               <AnimalCard key={animal.id} animal={animal} />
             ))}
           </div>

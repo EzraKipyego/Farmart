@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { Search, ShoppingCart, Sprout, LogOut, ClipboardList, User } from 'lucide-react'
-import { selectCartCount } from '../../features/cart/cartSlice'
+import { clearCart, selectCartCount } from '../../features/cart/cartSlice'
 import { logout } from '../../features/auth/authSlice'
 
 function Navbar() {
@@ -11,6 +11,7 @@ function Navbar() {
   const cartCount = useSelector(selectCartCount)
 
   function handleLogout() {
+    dispatch(clearCart())
     dispatch(logout())
     navigate('/login')
   }

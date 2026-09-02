@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, Loader2, LogOut } from 'lucide-react'
 import { updateUserProfile, clearAuthError, logout } from '../features/auth/authSlice'
+import { clearCart } from '../features/cart/cartSlice'
 import { kenyanCounties } from '../data/mockAnimals'
 
 function ProfilePage() {
@@ -20,6 +21,7 @@ function ProfilePage() {
   const [saved, setSaved] = useState(false)
 
   function handleLogout() {
+    dispatch(clearCart())
     dispatch(logout())
     navigate('/login')
   }

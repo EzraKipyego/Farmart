@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Sprout, User, Tractor, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { loginUser, registerUser, requestPasswordReset, confirmPasswordReset, clearAuthError } from '../features/auth/authSlice'
+import { clearCart } from '../features/cart/cartSlice'
 
 const passwordMessage = 'Password must be at least 6 characters and contain a letter, number, and special character.'
 
@@ -65,9 +66,11 @@ function AuthPage() {
     try {
       if (mode === 'login') {
         await dispatch(loginUser({ email: form.email, password: form.password, role })).unwrap()
+        dispatch(clearCart())
         navigate(redirectTo, { replace: true })
       } else if (mode === 'register') {
         const result = await dispatch(registerUser({ name: form.name, email: form.email, password: form.password, phone: form.phone, county: form.county, role })).unwrap()
+        dispatch(clearCart())
         setSuccessMessage(result.message || 'Account created successfully.')
         window.setTimeout(() => navigate(redirectTo, { replace: true }), 800)
       } else if (mode === 'forgot') {

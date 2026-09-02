@@ -17,7 +17,7 @@ function OrdersPage() {
   }, [dispatch])
 
   return (
-    <div className="px-4 sm:px-6 pt-4 pb-24 sm:pb-10 max-w-xl mx-auto">
+    <div className="px-4 sm:px-6 pt-4 pb-24 sm:pb-10 max-w-7xl mx-auto">
       <h1 className="text-base font-medium text-[#f5f5f0] mb-5">My orders</h1>
 
       {status === 'loading' && <Spinner label="Loading your orders" />}
@@ -38,7 +38,7 @@ function OrdersPage() {
       )}
 
       {status === 'succeeded' && buyerOrders.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
           {buyerOrders.map((order) => {
             const mappedStatus = mapBuyerOrderStatus(order.status)
             return (
