@@ -9,7 +9,7 @@ export async function fetchAnimals(filters = {}) {
     if (filters.minAge != null) params.min_age = filters.minAge
     if (filters.maxAge != null) params.max_age = filters.maxAge
 
-    const response = await api.get('/animals/', { params })
+    const response = await api.get('/animals', { params })
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
@@ -20,7 +20,7 @@ export async function fetchAnimals(filters = {}) {
 
 export async function fetchAnimalById(id) {
   try {
-    const response = await api.get(`/animals/${id}/`)
+    const response = await api.get(`/animals/${id}`)
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
@@ -42,7 +42,7 @@ export async function createAnimal(payload) {
 
 export async function updateAnimal(id, payload) {
   try {
-    const response = await api.put(`/animals/${id}/`, payload)
+    const response = await api.put(`/animals/${id}`, payload)
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
@@ -53,7 +53,7 @@ export async function updateAnimal(id, payload) {
 
 export async function deleteAnimal(id) {
   try {
-    const response = await api.delete(`/animals/${id}/`)
+    const response = await api.delete(`/animals/${id}`)
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)
@@ -64,7 +64,7 @@ export async function deleteAnimal(id) {
 
 export async function fetchFarmerAnimals(farmerId) {
   try {
-    const response = await api.get('/farmer/animals/', { params: { farmer_id: farmerId } })
+    const response = await api.get('/farmer/animals', { params: { farmer_id: farmerId } })
     return response.data
   } catch (error) {
     const normalized = normalizeApiError(error)

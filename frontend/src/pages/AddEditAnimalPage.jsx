@@ -28,7 +28,7 @@ function AddEditAnimalPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.auth)
-  const { selectedAnimal, detailStatus, error } = useSelector((state) => state.animals)
+  const { selectedAnimal, detailStatus } = useSelector((state) => state.animals)
 
   const [form, setForm] = useState(emptyForm)
   const [formError, setFormError] = useState(null)
@@ -44,7 +44,6 @@ function AddEditAnimalPage() {
   }, [dispatch, id, isEdit])
 
   const loadedAnimal = isEdit && selectedAnimal && selectedAnimal.id === id ? selectedAnimal : null
-  const listingNotFound = isEdit && detailStatus === 'failed' && error?.status === 404
 
   if (loadedAnimal && appliedId !== loadedAnimal.id) {
     setAppliedId(loadedAnimal.id)
@@ -147,17 +146,6 @@ function AddEditAnimalPage() {
 
   if (isEdit && detailStatus === 'loading') {
     return <p className="text-center text-sm text-[#8b95a1] py-12">Loading listing…</p>
-  }
-
-  if (listingNotFound) {
-    return (
-      <div className="px-4 sm:px-6 pt-4 pb-24 sm:pb-10 max-w-lg mx-auto text-center">
-        <p className="text-sm text-[#f87171] mb-4">This listing no longer exists.</p>
-        <Link to="/farmer/listings" className="text-sm text-[#2dd4a7] hover:underline">
-          Back to listings
-        </Link>
-      </div>
-    )
   }
 
   return (
