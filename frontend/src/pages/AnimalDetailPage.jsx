@@ -165,7 +165,7 @@ function AnimalDetailPage() {
       </div>
 
       {!isSoldOut && (
-        <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-[#0d1117] border-t border-[#1f2937] p-3 flex gap-3 z-40">
+        <div className="fixed bottom-14 left-0 right-0 sm:hidden bg-[#0d1117] border-t border-[#1f2937] p-3 flex gap-3 z-50">
           <button
             onClick={handleBuyNow}
             className="flex-1 bg-[#2dd4a7] text-[#04342c] font-medium text-sm py-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"

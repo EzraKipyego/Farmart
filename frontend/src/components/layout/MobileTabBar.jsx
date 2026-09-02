@@ -19,11 +19,11 @@ function MobileTabBar() {
         aria-label="Farmer navigation"
         className="fixed bottom-0 left-0 right-0 z-40 flex bg-[#161b22] border-t border-[#1f2937] sm:hidden"
       >
-        <NavLink to="/farmer/dashboard" end className={tabClass}>
+        <NavLink to="/" end className={tabClass}>
           <Home size={20} aria-hidden="true" />
           Dashboard
         </NavLink>
-        <NavLink to="/farmer/listings/new" className={tabClass}>
+        <NavLink to="/my-animals" className={tabClass}>
           <PlusCircle size={20} aria-hidden="true" />
           Add listing
         </NavLink>

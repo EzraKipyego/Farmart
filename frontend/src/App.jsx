@@ -78,6 +78,14 @@ function App() {
             }
           />
           <Route
+            path="/my-animals"
+            element={
+              <ProtectedRoute allowedRole="farmer">
+                <FarmerListingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/farmer/listings/new"
             element={
               <ProtectedRoute allowedRole="farmer">

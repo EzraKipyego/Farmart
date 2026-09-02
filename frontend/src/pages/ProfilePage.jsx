@@ -132,6 +132,15 @@ function ProfilePage() {
           Save changes
         </button>
       </form>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="w-full flex items-center justify-center gap-2 border border-[#f87171]/50 text-[#f87171] font-medium text-sm py-2.5 rounded-lg mt-4 outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1117]"
+      >
+        <LogOut size={15} aria-hidden="true" />
+        Log out
+      </button>
     </div>
   )
 }
